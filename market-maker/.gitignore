@@ -1,0 +1,28 @@
+# === SECRETS — ne jamais committer ===
+*.env
+.env
+.poly_env*
+*secret*
+*.key
+*.pem
+
+# === build artifacts ===
+/rebate
+rebate
+*.exe
+*.test
+gotmp/
+wsvenv/
+venv/
+
+# === runtime data / résultats de test ===
+*.log
+*.csv
+*.out
+pos.json
+*.pid
+
+# === OS / éditeur ===
+.DS_Store
+*.swp
+*~

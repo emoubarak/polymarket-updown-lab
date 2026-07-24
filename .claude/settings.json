@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m py_compile:*)",
+      "Bash(python3 main.py:*)",
+      "Bash(python3 archive.py:*)",
+      "Bash(python3 webdash.py:*)",
+      "Bash(sshpass -p * scp:*)",
+      "Bash(sshpass -p * rsync:*)",
+      "Bash(rsync -az --exclude __pycache__:*)",
+      "Bash(python3 research/*)",
+      "Bash(python3 tools/*)",
+      "Bash(python3 -c:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(du:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)"
+    ]
+  }
+}

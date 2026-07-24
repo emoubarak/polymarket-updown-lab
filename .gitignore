@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+paper_state*/
+state_*/
+live_state*/
+pilot_status.json
+pilot_registry.json
+.live_env
+*.log
+history/
+.venv*/
+# stray 20MB PostScript blob accidentally dropped in the root — safe to `rm`
+statistics
+py-clob-client-v2/

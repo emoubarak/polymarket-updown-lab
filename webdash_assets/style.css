@@ -1,0 +1,317 @@
+/* pmlab — "le laboratoire" design system
+   ============================================================================
+   A dark tarnished-metal instrument panel for an alchemical strategy race.
+   The magnum opus framing (transmute market noise into gold) is the identity;
+   the DATA stays ruthlessly legible. Every colour/size is a token here, so the
+   whole theme is a one-block retune (dark only by design — color-scheme:dark).
+
+   Display  = Fraunces (antique optical serif) — headings, wordmark, big numbers
+   Body/UI  = system-ui                         — labels, prose
+   Data     = IBM Plex Mono (tabular figures)   — every number, ticker, slug
+
+   Semantics (two independent truths, two colour axes):
+     gold      = you MADE money (P&L > 0)            vermilion = you LOST money
+     verdigris = the edge is PROVEN (tripwire pass)  amber     = still on trial
+   ========================================================================== */
+
+/* --- fonts ---------------------------------------------------------------- */
+@font-face{font-family:Fraunces;src:url(/a/fonts/fraunces-vf.woff2) format('woff2');
+  font-weight:100 900;font-style:normal;font-display:swap;}
+@font-face{font-family:"Plex Mono";src:url(/a/fonts/plexmono-400.woff2) format('woff2');
+  font-weight:400;font-display:swap;}
+@font-face{font-family:"Plex Mono";src:url(/a/fonts/plexmono-600.woff2) format('woff2');
+  font-weight:600;font-display:swap;}
+
+/* --- tokens --------------------------------------------------------------- */
+:root{
+  --base:#14110b; --surface:#1d1810; --surface-2:#262017; --surface-3:#322a1d;
+  /* ink-3 = faintest text tier; lifted from #776c55 (≈3.3:1, failed WCAG AA)
+     to #948668 (≥4.5:1 on every surface) so muted captions stay legible. */
+  --line:#3b3122; --line-2:#4f4330; --ink:#ece2cf; --ink-2:#a99c80; --ink-3:#948668;
+  --gold:#e8c264; --gold-deep:#c79a3a; --vermilion:#e0573a; --verdigris:#5cba8d;
+  --amber:#e6992f; --mercury:#a3bac9; --copper:#c77b4e; --violet:#9b7ec9;
+  --pos:var(--gold); --neg:var(--vermilion);
+  --display:Fraunces,"Iowan Old Style",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:8px; --r-sm:5px; --shadow:0 2px 0 rgba(0,0,0,.45), 0 14px 34px -18px rgba(0,0,0,.8);
+  --glow-gold:0 0 0 1px rgba(232,194,100,.35), 0 0 22px -6px rgba(232,194,100,.5);
+  --sidebar-w:250px; --gap:18px;
+}
+
+/* --- reset / base --------------------------------------------------------- */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; background:var(--base); color:var(--ink);
+  font:15px/1.55 var(--sans); -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(1100px 600px at 78% -8%, rgba(232,194,100,.05), transparent 60%);
+  background-attachment:fixed;}
+a{color:inherit; text-decoration:none}
+::selection{background:rgba(232,194,100,.28)}
+/* keyboard focus — a visible gold ring on every interactive element (was missing,
+   so tabbing through the dashboard was invisible). Mouse clicks stay ring-free. */
+:focus-visible{outline:2px solid var(--gold); outline-offset:2px; border-radius:var(--r-sm)}
+.nav-item:focus-visible, table.tbl th.sortable:focus-visible,
+.collapse>summary:focus-visible, .btn:focus-visible{outline-offset:-2px}
+.num,.mono{font-family:var(--mono); font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .mut{color:var(--ink-2)} .faint{color:var(--ink-3)}
+.gold{color:var(--gold)} .merc{color:var(--mercury)} .verd{color:var(--verdigris)}
+
+/* --- app shell : sidebar + main ------------------------------------------ */
+.app{display:grid; grid-template-columns:var(--sidebar-w) minmax(0,1fr); min-height:100vh}
+
+.sidebar{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  background:linear-gradient(180deg,var(--surface) 0%, #181308 100%);
+  border-right:1px solid var(--line); padding:20px 14px; display:flex; flex-direction:column; gap:6px}
+.brand{display:flex; align-items:center; gap:11px; padding:4px 8px 14px; border-bottom:1px solid var(--line); margin-bottom:8px}
+.brand .sigil{font-size:26px; line-height:1; filter:drop-shadow(0 0 10px rgba(232,194,100,.5))}
+.brand .wm{font:600 21px/1 var(--display); letter-spacing:.01em}
+.brand .wm b{color:var(--gold); font-weight:600}
+.brand .tag{display:block; font:500 10px/1.3 var(--mono); color:var(--ink-3); text-transform:uppercase; letter-spacing:.12em; margin-top:3px}
+
+.live{display:inline-flex; align-items:center; gap:7px; margin:2px 8px 10px; font:600 10.5px var(--mono);
+  text-transform:uppercase; letter-spacing:.1em; color:var(--ink-2)}
+.live .dot{width:7px;height:7px;border-radius:50%;background:var(--verdigris);box-shadow:0 0 8px var(--verdigris);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+.nav-group{font:600 10px var(--mono); text-transform:uppercase; letter-spacing:.14em; color:var(--ink-3);
+  padding:14px 10px 5px}
+.nav-item{display:flex; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer;
+  background:transparent; border:1px solid transparent; border-radius:var(--r-sm); color:var(--ink-2);
+  font:500 13.5px var(--sans); padding:8px 10px}
+.nav-item:hover{background:var(--surface-2); color:var(--ink)}
+.nav-item.active{background:var(--surface-3); color:var(--ink); border-color:var(--line-2); box-shadow:inset 2px 0 0 var(--gold)}
+.nav-item.real.active{box-shadow:inset 2px 0 0 var(--vermilion)}
+.nav-item .g{width:20px; text-align:center; font-size:15px; flex:none}
+.nav-item .lab{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.nav-item .pnl{font:600 11.5px var(--mono); flex:none}
+.nav-dot{width:8px;height:8px;border-radius:2px;flex:none}
+.nav-foot{margin-top:auto; padding-top:12px; border-top:1px solid var(--line); color:var(--ink-3);
+  font:500 11px var(--mono)}
+
+/* grouping selector for the race list — Strat / Coin / Durée */
+.nav-tools{display:flex; gap:4px; padding:2px 8px 6px}
+.nav-tool{flex:1; padding:4px 6px; font:600 10px var(--mono); text-transform:uppercase;
+  letter-spacing:.08em; color:var(--ink-3); background:transparent; border:1px solid var(--line);
+  border-radius:var(--r-sm); cursor:pointer}
+.nav-tool:hover{color:var(--ink-2); border-color:var(--line-2)}
+.nav-tool.on{color:var(--ink); background:var(--surface-3); border-color:var(--line-2)}
+/* collapsible group header + body (display:contents lets items flow into the rail flex) */
+.nav-sub{display:flex; align-items:center; gap:8px; width:100%; text-align:left; cursor:pointer;
+  background:transparent; border:0; color:var(--ink-2); padding:8px 10px 3px;
+  font:600 10.5px var(--mono); text-transform:uppercase; letter-spacing:.1em}
+.nav-sub:hover{color:var(--ink)}
+/* the group holding the current page: accented so a collapsed rail still orients */
+.nav-sub.has-active{color:var(--ink); box-shadow:inset 2px 0 0 var(--gold)}
+.nav-sub.has-active .chev{color:var(--gold)}
+.nav-sub .chev{width:9px; font-size:9px; color:var(--ink-3); flex:none}
+.nav-sub .lab{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.nav-sub .cnt{color:var(--ink-3); font-size:10px; flex:none}
+.nav-sub .pnl{font:600 10.5px var(--mono); flex:none}
+.nav-grp-items{display:contents}
+.nav-grp-items.collapsed{display:none}
+
+.main{min-width:0; padding:26px 30px 80px; max-width:1480px}
+
+/* --- page header ---------------------------------------------------------- */
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap;
+  margin-bottom:22px; padding-bottom:14px; border-bottom:1px solid var(--line)}
+.page-head h1{margin:0; font:550 30px/1.05 var(--display); letter-spacing:.005em}
+.page-head .sub{margin:6px 0 0; color:var(--ink-2); font:500 13px var(--sans); max-width:74ch}
+.page-head .glyph{font-size:30px; margin-right:10px; vertical-align:-2px; filter:drop-shadow(0 0 8px rgba(232,194,100,.4))}
+.head-aside{display:flex; align-items:center; gap:12px}
+
+/* --- KPI cards (the instruments) ----------------------------------------- */
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:var(--gap); margin-bottom:var(--gap)}
+.kpi{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  padding:16px 18px; overflow:hidden}
+.kpi::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent,var(--line-2))}
+.kpi.real{border-color:rgba(224,87,58,.5)} .kpi.real::before{background:var(--vermilion)}
+.kpi.gold::before{background:var(--gold)} .kpi.verd::before{background:var(--verdigris)} .kpi.merc::before{background:var(--mercury)}
+.kpi .k{font:600 10.5px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--ink-2)}
+.kpi .v{font:550 30px/1 var(--display); margin:9px 0 4px; letter-spacing:.01em; font-variant-numeric:tabular-nums}
+.kpi .v.num{font-family:var(--mono); font-weight:600; font-size:27px}
+.kpi .s{font:500 11.5px var(--mono); color:var(--ink-3)}
+.kpi .tagline{position:absolute; right:12px; top:12px; font-size:18px; opacity:.5}
+
+/* --- panels --------------------------------------------------------------- */
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); margin-bottom:var(--gap)}
+.panel-head{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:13px 18px; border-bottom:1px solid var(--line)}
+.panel-head h2{margin:0; font:600 12px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--ink-2)}
+.panel-head .aside{font:500 11.5px var(--mono); color:var(--ink-3)}
+.panel-body{padding:16px 18px}
+.panel-body.flush{padding:0}
+.grid-2{display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:var(--gap)}
+
+/* --- le bestiaire : one description card per deployed brain (About) -------- */
+.strat-list{display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:14px}
+.strat-card{border:1px solid var(--line); border-radius:var(--r-sm); background:var(--surface-2);
+  padding:14px 16px; border-left:2px solid var(--gold)}
+.strat-card-head{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+.strat-card-head .g{font-size:18px; filter:drop-shadow(0 0 6px rgba(232,194,100,.35))}
+.strat-name{font:600 16px var(--display); letter-spacing:.005em; color:var(--ink)}
+.strat-where{margin-left:auto; font:600 10.5px var(--mono); text-transform:uppercase; letter-spacing:.08em;
+  color:var(--ink-3); border:1px solid var(--line); border-radius:99px; padding:2px 9px}
+.strat-tag{margin:9px 0 0; font-size:13px; line-height:1.55; color:var(--ink)}
+.strat-meta{margin:8px 0 0; font:500 11.5px var(--mono); color:var(--ink-2)}
+.strat-meta b{color:var(--gold); font-weight:600}
+.strat-desc{margin:10px 0 0; padding-top:10px; border-top:1px solid var(--line);
+  font-size:12px; line-height:1.6; color:var(--ink-2)}
+
+/* --- data table ----------------------------------------------------------- */
+.tbl-wrap{overflow-x:auto}
+table.tbl{border-collapse:collapse; width:100%; font-size:13.5px}
+table.tbl thead th{position:sticky; top:0; background:var(--surface-2); color:var(--ink-2);
+  font:600 10.5px var(--mono); text-transform:uppercase; letter-spacing:.07em; text-align:right;
+  padding:10px 13px; border-bottom:1px solid var(--line-2); white-space:nowrap; cursor:default}
+table.tbl thead th.sortable{cursor:pointer; user-select:none}
+table.tbl thead th.sortable:hover{color:var(--ink)}
+table.tbl thead th .ar{color:var(--gold); margin-left:3px}
+table.tbl th:first-child,table.tbl td:first-child{text-align:left}
+table.tbl tbody td{padding:10px 13px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap}
+table.tbl tbody tr:last-child td{border-bottom:0}
+table.tbl tbody tr{cursor:default}
+table.tbl tbody tr.clickable{cursor:pointer}
+table.tbl tbody tr.clickable:hover td{background:var(--surface-2)}
+table.tbl .lead{font-weight:600; color:var(--ink)}
+.cell-name{display:flex; align-items:center; gap:9px}
+.cell-name .g{font-size:15px}
+
+/* --- correlation heatmap -------------------------------------------------- */
+.heat-wrap{overflow-x:auto; padding:4px 2px 2px}
+table.heat{border-collapse:separate; border-spacing:2px; font:600 11px var(--mono)}
+table.heat thead th{background:transparent; color:var(--ink-3); font-weight:600;
+  text-align:center; padding:2px; min-width:30px}
+table.heat th.rh{text-align:left; color:var(--ink-2); font-weight:500; white-space:nowrap;
+  padding:0 12px 0 4px; min-width:initial}
+table.heat th.rh .g{font-size:14px; margin-right:6px}
+table.heat td{width:30px; height:30px; text-align:center; color:var(--ink);
+  border-radius:var(--r-sm); border:1px solid var(--line); background-clip:padding-box}
+table.heat td.red{border-color:var(--vermilion); box-shadow:inset 0 0 0 1px var(--vermilion)}
+table.heat td .g{font-size:13px; opacity:.5}
+
+/* --- verdict seal (THE signature) ---------------------------------------- */
+/* the assay result: has base metal become gold? two-ring stamp, metal-coded. */
+.seal{display:inline-flex; align-items:center; gap:7px; padding:4px 10px 4px 7px; border-radius:999px;
+  border:1px solid var(--sc,var(--line-2)); background:var(--sbg,var(--surface-2)); color:var(--sc,var(--ink-2));
+  font:600 10.5px var(--mono); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap}
+.seal .mk{width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor; display:grid;place-items:center;
+  font-size:8px; flex:none}
+.seal.proven{--sc:var(--verdigris); --sbg:rgba(92,186,141,.12)}
+.seal.trial {--sc:var(--amber);     --sbg:rgba(230,153,47,.12)}
+.seal.none  {--sc:var(--vermilion); --sbg:rgba(224,87,58,.12)}
+.seal.wait  {--sc:var(--ink-3);     --sbg:var(--surface-2)}
+.seal.lg{font-size:12px; padding:7px 15px 7px 10px} .seal.lg .mk{width:20px;height:20px;font-size:11px}
+
+/* --- opus gauge : journey lead -> gold (n/150 + edge proven) -------------- */
+.opus{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:16px 18px}
+.opus-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:11px}
+.opus-top .t{font:600 11px var(--mono); text-transform:uppercase; letter-spacing:.1em; color:var(--ink-2)}
+.opus-track{position:relative; height:12px; border-radius:6px; background:#100d08; border:1px solid var(--line);
+  overflow:hidden}
+.opus-fill{position:absolute; left:0; top:0; bottom:0; border-radius:6px;
+  background:linear-gradient(90deg,#5a5040,var(--gold)); transition:width .6s ease}
+.opus-mark{position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink); opacity:.6}
+.opus-legend{display:flex; justify-content:space-between; font:500 10.5px var(--mono); color:var(--ink-3); margin-top:7px}
+
+/* --- GO lamp -------------------------------------------------------------- */
+.lamp-row{display:flex; align-items:center; gap:12px; padding:12px 16px; border:1px solid var(--line);
+  border-radius:var(--r); background:var(--surface); font:600 11.5px var(--mono); color:var(--ink-2)}
+.lamp{width:16px;height:16px;border-radius:50%; flex:none; box-shadow:0 0 12px -1px currentColor; border:2px solid rgba(0,0,0,.35)}
+
+/* --- tags / dots / chips -------------------------------------------------- */
+.tag{display:inline-block; padding:3px 8px; border-radius:999px; border:1px solid var(--line-2);
+  background:var(--surface-2); font:600 10px var(--mono); text-transform:uppercase; letter-spacing:.05em; color:var(--ink-2)}
+.tag.gold{color:var(--gold);border-color:rgba(232,194,100,.4)} .tag.real{color:var(--vermilion);border-color:rgba(224,87,58,.45)}
+.dot{display:inline-block; width:8px;height:8px;border-radius:50%; vertical-align:middle; margin-right:6px}
+
+/* --- stat rows (sim/real comparison etc.) -------------------------------- */
+.stat{display:flex; justify-content:space-between; gap:14px; padding:9px 0; border-top:1px solid var(--line); font-size:13.5px}
+.stat:first-child{border-top:0}
+.stat .k{color:var(--ink-2)} .stat .v{font-family:var(--mono); font-weight:600}
+.note-box{margin-top:12px; padding:10px 13px; border-radius:var(--r-sm); border:1px solid var(--line); font-size:12.5px; line-height:1.55}
+.note-box.ok{border-color:rgba(92,186,141,.4); background:rgba(92,186,141,.08); color:var(--verdigris)}
+.note-box.bad{border-color:rgba(224,87,58,.4); background:rgba(224,87,58,.08); color:var(--vermilion)}
+
+/* --- chart ---------------------------------------------------------------- */
+.chart-box{position:relative; width:100%}
+.chart-legend{display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font:500 11.5px var(--mono); color:var(--ink-2)}
+.chart-legend .lg{display:inline-flex; align-items:center; gap:7px; cursor:pointer}
+.chart-legend .lg.off{opacity:.4; text-decoration:line-through}
+.chart-legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+
+/* --- buttons / fields (pilot controls) ----------------------------------- */
+.btn{display:inline-flex; align-items:center; gap:7px; cursor:pointer; border-radius:var(--r-sm);
+  border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink); padding:9px 14px;
+  font:600 12.5px var(--sans)}
+.btn:hover{background:var(--surface-3); border-color:var(--ink-3)}
+.btn.primary{border-color:rgba(232,194,100,.5); color:var(--gold)}
+.btn.danger{border-color:rgba(224,87,58,.55); color:var(--vermilion)}
+.btn.danger:hover{background:rgba(224,87,58,.12)}
+.btn.sm{padding:4px 9px; font-size:11px}
+.btn.primary:hover{background:rgba(232,194,100,.10)}
+/* filter bar — Overview "table d'essai" (coin / strat / frame) */
+.filters{display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:11px 18px;
+  border-bottom:1px solid var(--line)}
+.filters .flab{font:600 10px var(--mono); text-transform:uppercase; letter-spacing:.12em;
+  color:var(--ink-3); margin-left:14px}
+.filters .flab:first-child{margin-left:0}
+.filters .btn.sm{padding:3px 9px; font:600 11px var(--mono); text-transform:uppercase; letter-spacing:.04em}
+/* page-level variant: a self-framed toolbar (governs every detail panel below, not
+   just the table it used to sit inside) */
+.filters.page{border:1px solid var(--line); border-radius:var(--r); background:var(--surface);
+  margin-bottom:var(--gap)}
+.filters .ftitle{font:600 10px var(--mono); text-transform:uppercase; letter-spacing:.14em;
+  color:var(--gold); margin-right:4px}
+.filters .btn.sm.reset{margin-left:14px; color:var(--ink-3); border-color:var(--line)}
+.filters .btn.sm.reset:hover{color:var(--ink); border-color:var(--line-2)}
+.field{display:inline-flex; align-items:center; gap:7px; font:500 12px var(--sans); color:var(--ink-2)}
+.field b{color:var(--ink); font-weight:600}
+.ctl{background:var(--base); color:var(--ink); border:1px solid var(--line-2); border-radius:var(--r-sm);
+  padding:6px 8px; font:13px var(--mono)} .ctl:focus{outline:2px solid var(--gold); outline-offset:1px}
+input[type=number].ctl{width:74px}
+.controls{display:flex; gap:16px; flex-wrap:wrap; align-items:center}
+
+/* --- howto / empty / collapsible ----------------------------------------- */
+.howto{padding:11px 14px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--surface-2);
+  font-size:12.5px; line-height:1.6; color:var(--ink-2)}
+.howto.warn{border-color:rgba(224,87,58,.4); background:rgba(224,87,58,.08)}
+.howto b{color:var(--ink)} .howto code{font-family:var(--mono); font-size:11.5px; color:var(--gold)}
+.empty{color:var(--ink-3); font-size:13px; padding:18px; text-align:center; font-style:italic}
+.collapse{border:1px solid var(--line); border-radius:var(--r); margin-bottom:var(--gap); background:var(--surface)}
+.collapse>summary{cursor:pointer; padding:13px 18px; font:600 11.5px var(--mono); text-transform:uppercase;
+  letter-spacing:.08em; color:var(--ink-2); list-style:none}
+.collapse>summary::-webkit-details-marker{display:none}
+.collapse>summary::before{content:"＋ "; color:var(--gold)} .collapse[open]>summary::before{content:"－ "}
+.collapse .body{padding:0 18px 18px; border-top:1px solid var(--line); color:var(--ink-2); font-size:13px; line-height:1.65}
+pre.log{background:var(--base); border:1px solid var(--line); border-radius:var(--r-sm); padding:12px; overflow-x:auto;
+  font:11.5px/1.5 var(--mono); color:var(--ink-2); margin:14px 0 0; max-height:340px}
+
+/* --- projection table ----------------------------------------------------- */
+.proj-h{font:550 16px var(--display); margin:20px 0 9px}
+td.cmp{color:var(--gold); font-weight:600} td.lin{color:var(--ink-2)}
+.cell-sub{font:500 10px var(--mono); color:var(--ink-3)}
+
+/* --- responsive ----------------------------------------------------------- */
+@media (max-width:900px){
+  /* The old mobile nav wrapped 19 buttons into a giant block and hid every P&L.
+     Now it's a single sticky horizontal-scroll strip that SCALES to N runners and
+     keeps the P&L + connection status visible — swipe sideways through the race. */
+  .app{grid-template-columns:1fr}
+  .sidebar{position:sticky; top:0; z-index:5; height:auto; flex-direction:row; flex-wrap:nowrap;
+    align-items:center; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    border-right:0; border-bottom:1px solid var(--line); padding:9px 12px; gap:6px}
+  .brand{border:0; margin:0; padding:0 6px 0 0; flex:0 0 auto}
+  .brand .tag{display:none}
+  .live{margin:0 6px; flex:0 0 auto} .nav-group{display:none} .nav-foot{display:none}
+  /* the race becomes a flat swipe strip again: drop the grouping chrome, force every
+     runner visible (a desktop-collapsed group must not hide items on mobile) */
+  .nav-tools{display:none} .nav-sub{display:none}
+  .nav-grp-items, .nav-grp-items.collapsed{display:contents}
+  .nav-item{width:auto; flex:0 0 auto; padding:7px 10px} .nav-item .lab{max-width:140px}
+  .nav-item.active{box-shadow:inset 0 -2px 0 var(--gold)}
+  .nav-item.real.active{box-shadow:inset 0 -2px 0 var(--vermilion)}
+  .main{padding:18px 16px 60px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

@@ -1,0 +1,3 @@
+# cached backtest data — regenerate with dataset.py, don't commit
+data/
+__pycache__/

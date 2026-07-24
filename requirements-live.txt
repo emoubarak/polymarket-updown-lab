@@ -1,0 +1,12 @@
+# LIVE trading only. The paper side of this repo stays stdlib-only — install
+# these solely on the machine that will place real orders.
+#
+#   python3 -m venv .venv-live && . .venv-live/bin/activate
+#   pip install -r requirements-live.txt
+#
+# Migrated 2026-06-20 to Polymarket CTF Exchange V2 (April-2026 upgrade): the v1
+# client no longer works against production. No web3 needed — funding/wrap and
+# winning-position redemption are done in the Polymarket UI; the bot only signs
+# CLOB orders and the official pUSD allowance call.
+py-clob-client-v2       # Polymarket CLOB V2: signing + order posting (pUSD)
+requests>=2.28          # already used by feeds.py for read-only market data
