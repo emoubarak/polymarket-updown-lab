@@ -9,7 +9,7 @@ import { LineChart } from '../components/LineChart.js';
 
 export function History(){
   const runs = usePoll("/history", 30000).data;
-  if(!runs) return html`<div class="empty">Chargement de l'historique…</div>`;
+  if(!runs) return html`<div class="empty">Loading history…</div>`;
 
   const groups = new Map();
   runs.forEach(r => { const k = r.label + "|" + Math.floor(r.archived_at/600);
@@ -17,20 +17,20 @@ export function History(){
   const list = [...groups.values()].reverse();
 
   const cols = [
-    {key:"strategy", label:"Stratégie", cell:r=>html`<span class="lead">${nameOf(r.strategy)}</span>`},
-    {key:"pnl", label:"Résultat", sortable:true, cell:r=>html`<${Money} v=${r.pnl} signed=${true} />`},
-    {key:"fees_paid", label:"Frais", cell:r=>html`<span class="num">${money(r.fees_paid)}</span>`},
-    {key:"n_trades", label:"Paris", sortable:true, cell:r=>html`<span class="num">${r.n_trades}</span>`},
-    {key:"win", label:"Réussite", cell:r=>html`<span class="num">${r.n_trades?Math.round(100*r.n_wins/r.n_trades)+" %":"—"}</span>`},
-    {key:"final_equity", label:"Capital final", cell:r=>html`<span class="num">${money(r.final_equity)}</span>`},
+    {key:"strategy", label:"Strategy", cell:r=>html`<span class="lead">${nameOf(r.strategy)}</span>`},
+    {key:"pnl", label:"Result", sortable:true, cell:r=>html`<${Money} v=${r.pnl} signed=${true} />`},
+    {key:"fees_paid", label:"Fees", cell:r=>html`<span class="num">${money(r.fees_paid)}</span>`},
+    {key:"n_trades", label:"Bets", sortable:true, cell:r=>html`<span class="num">${r.n_trades}</span>`},
+    {key:"win", label:"Win rate", cell:r=>html`<span class="num">${r.n_trades?Math.round(100*r.n_wins/r.n_trades)+" %":"—"}</span>`},
+    {key:"final_equity", label:"Final capital", cell:r=>html`<span class="num">${money(r.final_equity)}</span>`},
   ];
 
   return html`
     <div class="page-head">
-      <div><h1><span class="glyph">🕰</span>Historique</h1>
-        <p class="sub">Chaque reset de la course est archivé avant d'être effacé — les runs passés, groupés par label.</p></div>
+      <div><h1><span class="glyph">🕰</span>History</h1>
+        <p class="sub">Every reset of the race is archived before being wiped — past runs, grouped by label.</p></div>
     </div>
-    ${!list.length ? html`<${Empty}>Aucun run archivé pour l'instant.</${Empty}>`
+    ${!list.length ? html`<${Empty}>No archived run yet.</${Empty}>`
       : list.map(g => {
           const t0 = Math.min(...g.map(r=>r.started||r.archived_at));
           const t1 = Math.max(...g.map(r=>r.ended||r.archived_at));

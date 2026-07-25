@@ -1,7 +1,7 @@
 """Cross-strategy correlation — how many INDEPENDENT bets the lineup really is, with
 SIMULTANEOUS LOSSES as the primary lens.
 
-The "ETF de stratégies" question: a row of runners can look like many bets while loading
+The "strategy ETF" question: a row of runners can look like many bets while loading
 on ONE risk factor. And what actually ruins such a book is its asymmetric payoff — a
 favorite pays ~+0.11 to win but −1.00 to lose, so a CLUSTER of losses in the same window
 hurts far more than the wins help. Full-P&L Pearson treats upside and downside the same

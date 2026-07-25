@@ -15,10 +15,10 @@ import { About } from './pages/About.js';
 
 const parseHash = () => (location.hash.replace(/^#\/?/, "") || "overview");
 
-const TITLES = {overview:"Vue d'ensemble", correlation:"Corrélations", pilot:"Le pilote",
-  mm:"Rewards-MM", events:"Évènements", copy:"Copie de wallets", history:"Historique", about:"La méthode"};
+const TITLES = {overview:"Overview", correlation:"Correlations", pilot:"The pilot",
+  mm:"Rewards-MM", events:"Events", copy:"Wallet copy", history:"History", about:"The method"};
 const titleFor = r => "pmlab — "
-  + (r.startsWith("strat/") ? r.slice(6) : (TITLES[r] || "le laboratoire"));
+  + (r.startsWith("strat/") ? r.slice(6) : (TITLES[r] || "the lab"));
 
 function useRoute(){
   const [r, setR] = useState(parseHash());
@@ -39,8 +39,8 @@ class Boundary extends Component {
   componentDidUpdate(prev){ if(prev.route !== this.props.route && this.state.err) this.setState({err:null}); }
   render(){
     if(this.state.err) return html`<div class="empty" style="padding:48px">
-      Cette page a planté : ${String(this.state.err)}.
-      <div style="margin-top:10px"><button class="btn" onClick=${()=>this.setState({err:null})}>réessayer</button></div></div>`;
+      This page crashed: ${String(this.state.err)}.
+      <div style="margin-top:10px"><button class="btn" onClick=${()=>this.setState({err:null})}>retry</button></div></div>`;
     return this.props.children;
   }
 }
@@ -55,7 +55,7 @@ function Page({route, all, pilot, go}){
   if(route === "history")  return html`<${History} />`;
   if(route === "about")    return html`<${About} />`;
   if(route.startsWith("strat/")) return html`<${Strategy} name=${route.slice(6)} />`;
-  return html`<div class="empty">Page inconnue.</div>`;
+  return html`<div class="empty">Unknown page.</div>`;
 }
 
 function App(){
@@ -79,5 +79,5 @@ loadConfig()
   .then(() => render(html`<${App} />`, document.getElementById("root")))
   .catch(e => {
     document.getElementById("root").innerHTML =
-      `<div class="empty">Échec du chargement de la config : ${e}. Le dashboard est-il à jour ?</div>`;
+      `<div class="empty">Failed to load config: ${e}. Is the dashboard up to date?</div>`;
   });

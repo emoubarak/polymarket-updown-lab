@@ -32,12 +32,12 @@ export const Opus = ({m}) => {
                      : "linear-gradient(90deg,#4a3128,var(--vermilion))";
   return html`<div class="opus">
     <div class="opus-top">
-      <span class="t">L'œuvre — vers l'avantage prouvé</span>
+      <span class="t">The work — toward a proven edge</span>
       <span class=${"num " + (above ? "gold" : n ? "neg" : "mut")}>
-        ${n ? pct(m.win_rate) + " vs prix " + pct(m.avg_price) : "—"}</span></div>
+        ${n ? pct(m.win_rate) + " vs price " + pct(m.avg_price) : "—"}</span></div>
     <div class="opus-track"><div class="opus-fill" style=${"width:" + prog + "%;background:" + fill}></div>
       <div class="opus-mark" style="left:100%"></div></div>
-    <div class="opus-legend"><span>${"plomb · " + n + "/150 paris"}</span><span>${"or · 150 paris + win > prix"}</span></div>
+    <div class="opus-legend"><span>${"lead · " + n + "/150 bets"}</span><span>${"gold · 150 bets + win > price"}</span></div>
   </div>`;
 };
 
@@ -46,7 +46,7 @@ export const Lamp = ({lamp}) => html`
     role="img" aria-label=${lamp.t}></span>${lamp.t}</div>`;
 
 export const HealthDot = ({h}) => html`<span class="dot" style=${"background:" + h.c}
-  role="img" aria-label=${"moteur " + h.t}></span>${h.t}`;
+  role="img" aria-label=${"engine " + h.t}></span>${h.t}`;
 
 export const Tag = ({tone, title, children}) =>
   html`<span class=${"tag " + (tone || "")} title=${title || ""}>${children}</span>`;

@@ -131,11 +131,11 @@ class LiveLadder:
             except (TypeError, ValueError):
                 usd = 0.0
             how = ("MAKER" if kind == "FILL_BUY"
-                   else "renfort" if kind == "BUY+" else "taker")
-            msg = (f"🟢 ACHAT {how}{tag} {row.get('direction')} @ {row.get('price')} "
+                   else "top-up" if kind == "BUY+" else "taker")
+            msg = (f"🟢 BUY {how}{tag} {row.get('direction')} @ {row.get('price')} "
                    f"· ${usd:.2f}\n{slug}")
         elif kind in ("WIN", "LOSS"):
-            emo = "✅ GAGNÉ" if kind == "WIN" else "❌ PERDU"
+            emo = "✅ WON" if kind == "WIN" else "❌ LOST"
             msg = (f"{emo}{tag} {row.get('direction')} · P&L ${row.get('pnl')} "
                    f"· capital ${row.get('bankroll')}\n{slug}")
         else:
@@ -495,12 +495,12 @@ class LiveLadder:
         if is_armed():
             self.broker.ensure_allowances()
             self._sync_bankroll()
-            log(f"capital synchronisé on-chain : ${self.stake.bankroll:.2f} pUSD")
+            log(f"capital synced on-chain: ${self.stake.bankroll:.2f} pUSD")
             from pmlab.notify import notify, enabled
             if enabled():
-                notify(f"🤖 Pilote RÉEL armé — {self.name} {self.underlying.upper()} "
-                       f"{self.iv}\nCapital ${self.stake.bankroll:.2f} · notifications actives")
-                log("notifications Telegram actives")
+                notify(f"🤖 REAL pilot armed — {self.name} {self.underlying.upper()} "
+                       f"{self.iv}\nCapital ${self.stake.bankroll:.2f} · notifications active")
+                log("Telegram notifications active")
         n = 0
         last_sync = time.time()
         while ticks is None or n < ticks:

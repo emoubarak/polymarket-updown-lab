@@ -407,6 +407,6 @@ class LiveBroker:
         fire a blind on-chain tx whose collateral arg could be wrong under V2.
         The won value sits safely in the position token until claimed; for a small
         pilot, claim it in the UI."""
-        self.log(f"win {condition_id[:10]}… — réclame le gain dans l'UI Polymarket "
-                 f"(valeur en sécurité, pas d'auto-redeem en V2)")
+        self.log(f"win {condition_id[:10]}… — claim the winnings in the Polymarket UI "
+                 f"(value is safe, no auto-redeem in V2)")
         return False

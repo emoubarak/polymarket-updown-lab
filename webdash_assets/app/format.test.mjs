@@ -69,10 +69,10 @@ t('goLamp colours', () => {
 // --- runner health from last-tick freshness (uses wall clock) ---
 t('health freshness', () => {
   const now = Math.floor(Date.now()/1000);
-  assert.equal(health(null).t, 'inconnu');
-  assert.equal(health({ts:now}).t, 'actif');
-  assert.equal(health({ts:now-300}).t, 'lent');
-  assert.equal(health({ts:now-2000}).t, 'muet');
+  assert.equal(health(null).t, 'unknown');
+  assert.equal(health({ts:now}).t, 'live');
+  assert.equal(health({ts:now-300}).t, 'slow');
+  assert.equal(health({ts:now-2000}).t, 'silent');
 });
 
 // --- money / numbers / dates ---
@@ -90,20 +90,20 @@ t('ageStr buckets', () => {
   assert.equal(ageStr(7200), '2.0 h');
 });
 t('simPnL = ev × stake × n', () => assert.equal(simPnL({ev:0.01, n:100}, 25), 25));
-t('dirLabel', () => { assert.equal(dirLabel('Up'), 'Hausse'); assert.equal(dirLabel('Down'), 'Baisse'); });
+t('dirLabel', () => { assert.equal(dirLabel('Up'), 'Up'); assert.equal(dirLabel('Down'), 'Down'); });
 
 // --- preset gate display (served from /config; locks the widened-slot rendering) ---
 t('entrySlot = window fractions × frame, minutes left', () => {
   const z = {enter_lo:0.27, enter_hi:0.45};            // zlead flagship (widened)
-  assert.match(entrySlot(z, '15m'), /^4[.,]05.*6[.,]75 min restantes$/);  // 0.27/0.45 × 15
-  assert.match(entrySlot(z, '5m'),  /^1[.,]35.*2[.,]25 min restantes$/);  // × 5
+  assert.match(entrySlot(z, '15m'), /^4[.,]05.*6[.,]75 min left$/);  // 0.27/0.45 × 15
+  assert.match(entrySlot(z, '5m'),  /^1[.,]35.*2[.,]25 min left$/);  // × 5
   assert.equal(entrySlot(null, '15m'), null);
 });
 t('gateSummary = band + lead floor + execution', () => {
-  assert.equal(gateSummary({min_fav:0.85, max_fav:0.95, min_lead_z:1}), 'favori 0.85–0.95 · z≥1');
-  assert.equal(gateSummary({min_fav:0.85, max_fav:0.9, min_lead_z:1}), 'favori 0.85–0.9 · z≥1');
+  assert.equal(gateSummary({min_fav:0.85, max_fav:0.95, min_lead_z:1}), 'favorite 0.85–0.95 · z≥1');
+  assert.equal(gateSummary({min_fav:0.85, max_fav:0.9, min_lead_z:1}), 'favorite 0.85–0.9 · z≥1');
   assert.equal(gateSummary({min_fav:0.85, max_fav:0.95, min_lead_z:1, maker_entry:true}),
-    'favori 0.85–0.95 · z≥1 · entrée maker');
+    'favorite 0.85–0.95 · z≥1 · maker entry');
   assert.equal(gateSummary(null), null);
 });
 t('presetName = base · type (the modular identity)', () => {

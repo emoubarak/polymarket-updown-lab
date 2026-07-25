@@ -91,9 +91,9 @@ def main() -> None:
         added += 1
         h = (rec["ended"] - rec["started"]) / 3600 if rec["started"] else 0
         print(f"  {name}: pnl {rec['pnl']:+.2f} sur {h:.1f}h "
-              f"({rec['n_trades']} trades) archivé")
+              f"({rec['n_trades']} trades) archived")
     HISTORY.write_text(json.dumps(runs))
-    print(f"{added} run(s) ajoutés → {HISTORY} ({len(runs)} au total)")
+    print(f"{added} run(s) added → {HISTORY} ({len(runs)} total)")
 
 
 if __name__ == "__main__":

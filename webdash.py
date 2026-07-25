@@ -91,134 +91,134 @@ COPY_STRATS: dict[str, dict] = {}   # wallet copy-mirror runners -> {state_dir, 
 STAKE_REF = 25.0
 
 # One-paragraph TECHNICAL summary per brain (base name; the JS strips any -5m/
-# -15m frame suffix to find it). Tucked into "détails techniques". Keep in sync
+# -15m frame suffix to find it). Tucked into "technical details". Keep in sync
 # with pmlab/engine.py.
 DESCRIPTIONS = {
     "favorite":
-        "EDGE VALIDÉ HORS-ÉCHANTILLON — favori-longshot sur 15 m. La foule "
-        "surpaie le côté quasi-mort (longshot) ; on achète le favori déjà extrême "
-        "(prix 0,85–0,95) à ~6 min de la fin, frais taker, portage au règlement, "
-        "AUCUNE sortie. C'est un pari sur la calibration des PRIX, pas sur la "
-        "direction de BTC. Payoff brutalement asymétrique (gain +~0,11 / perte "
-        "−1,00, break-even = le prix lui-même) → un cluster de flips fait mal. "
-        "Tripwire : si le win réalisé colle au prix d'entrée sur ~150 trades, "
-        "l'edge n'est pas réel et on retire (la mort de coagula).",
+        "EDGE VALIDATED OUT-OF-SAMPLE — favorite-longshot on 15m. The crowd "
+        "overpays the nearly-dead side (the longshot); we buy the already-extreme "
+        "favorite (price 0.85–0.95) ~6 min before the close, taker fees, carried to "
+        "settlement, NO exit. It is a bet on PRICE calibration, not on BTC's "
+        "direction. Brutally asymmetric payoff (win +~0.11 / loss "
+        "−1.00, break-even = the price itself) → a cluster of flips hurts. "
+        "Tripwire: if the realized win rate sticks to the entry price over ~150 trades, "
+        "the edge isn't real and we retire it (coagula's death).",
     "favorite_vol":
-        "RUBEDO + FILTRE DE VOLATILITÉ. Le favori en haute vol est un "
-        "« favori-tempête » sur le point de basculer — l'angle mort que le prix "
-        "seul ne montre pas. On saute les fenêtres dont la vol BTC 1 m dépasse "
-        "~0,00056 (66ᵉ pct). Le filtre AJOUTE de l'edge, ce n'est pas qu'un "
-        "garde-fou.",
+        "RUBEDO + VOLATILITY FILTER. A high-vol favorite is a "
+        "“storm favorite” about to flip — the blind spot that price "
+        "alone doesn't show. We skip windows whose 1m BTC vol exceeds "
+        "~0.00056 (66th pct). The filter ADDS edge; it is not just a "
+        "safety rail.",
     "favorite_wide":
-        "RUBEDO + FILTRE VOL + PLANCHER ABAISSÉ À 0,80. Plus de fenêtres "
-        "qualifient (volume), au prix d'un edge par trade plus faible "
-        "(OOS +0,018/$). Le pari : la prime favori existe encore à 0,80–0,85.",
+        "RUBEDO + VOL FILTER + FLOOR LOWERED TO 0.80. More windows "
+        "qualify (volume), at the cost of a weaker per-trade edge "
+        "(OOS +0.018/$). The bet: the favorite premium still exists at 0.80–0.85.",
     "favorite_lead":
-        "RUBEDO + PLANCHER DE LEAD. L'autopsie live (20/06) : les pertes de "
-        "favorite se concentrent sur les favoris MOUS — prix 0,85–0,91 au carnet "
-        "mais BTC à peine bougé à l'entrée (12–56 $ de mouvement), des quasi-pile-"
-        "ou-face que le carnet surcote (la zone 2–6 bps ne gagne que 0,92 vs ~0,97 "
-        "au-delà). On exige que le mouvement du favori soit ÉTABLI : lead ≥ 6 bps "
-        "de l'open de fenêtre, du bon côté. RECKONING 40 j (20/06) : sur BTC le "
-        "plancher n'ajoute presque rien au favori nu (OOS +0,003/$) — la fenêtre "
-        "10 j était favorable. MAIS le plancher se VALIDE hors-échantillon sur "
-        "ETH (underlying indépendant où le favori nu est MORT) : +0,042/$ — preuve "
-        "que le mécanisme est réel, pas un artefact BTC. Et il RESSUSCITE le 5m "
-        "(OOS +0,060/$, ~3× le volume). Le filtre tient ; c'est le favori nu qui "
-        "est mince.",
+        "RUBEDO + LEAD FLOOR. The live autopsy (20/06): favorite's losses "
+        "concentrate on SOFT favorites — priced 0.85–0.91 in the book "
+        "but BTC barely moved at entry ($12–56 of movement), near-coin-flips "
+        "that the book overprices (the 2–6 bps zone wins only 0.92 vs ~0.97 "
+        "beyond). We require the favorite's move to be ESTABLISHED: lead ≥ 6 bps "
+        "from the window open, on the right side. 40-DAY RECKONING (20/06): on BTC the "
+        "floor adds almost nothing over the bare favorite (OOS +0.003/$) — the "
+        "10-day window was favorable. BUT the floor VALIDATES out-of-sample on "
+        "ETH (an independent underlying where the bare favorite is DEAD): +0.042/$ — proof "
+        "that the mechanism is real, not a BTC artifact. And it RESURRECTS the 5m "
+        "(OOS +0.060/$, ~3× the volume). The filter holds; it is the bare favorite "
+        "that is thin.",
     "zlead":
-        "FAVORI EXTRÊME À SEUIL DE LEAD VOL-NORMALISÉ (z-score). Au lieu d'un "
-        "plancher de lead fixe en bps, on exige que le mouvement soit grand "
-        "RELATIVEMENT à la vol (lead / (σ·√τ) ≥ 1) — le SEUL edge qui survit à "
-        "l'audit multi-mois (tout ce qui est prix-seul est mort) et qui généralise "
-        "cross-actifs (BTC/ETH robustes, alts en forward-test). FENÊTRE D'ENTRÉE "
-        "ÉLARGIE 2026-06-25 : enter_lo 0,35 → 0,27 (entrée 4–6,75 min restantes au "
-        "lieu de 5,25–6,75). Le backtest marginal (objectif = cumul $/jour, pas "
-        "EV/pari) montre que le profit cumulé monte jusqu'à ~4 min restantes puis "
-        "RETOMBE : les cohortes 2-3 et 1-2 min sont EV-négatives et le slippage réel "
-        "s'aggrave tard. 0,27 est le bound robuste au slippage qui maximise le PnL "
-        "du jour ; élargir vers le HAUT (entrées plus tôt) est strictement pire. "
-        "Tous les paramètres vivent dans pmlab/presets.py (un preset = une "
-        "stratégie, partagé par le paper, le pilote réel et ce dashboard).",
+        "EXTREME FAVORITE WITH A VOL-NORMALIZED LEAD THRESHOLD (z-score). Instead of a "
+        "fixed lead floor in bps, we require the move to be large "
+        "RELATIVE to vol (lead / (σ·√τ) ≥ 1) — the ONLY edge that survives the "
+        "multi-month audit (everything price-only is dead) and that generalizes "
+        "cross-asset (BTC/ETH robust, alts in forward-test). ENTRY WINDOW "
+        "WIDENED 2026-06-25: enter_lo 0.35 → 0.27 (entry with 4–6.75 min left instead "
+        "of 5.25–6.75). The marginal backtest (objective = cumulative $/day, not "
+        "EV/bet) shows cumulative profit rises until ~4 min left then "
+        "FALLS BACK: the 2-3 and 1-2 min cohorts are EV-negative and real slippage "
+        "worsens late. 0.27 is the slippage-robust bound that maximizes daily "
+        "PnL; widening UPWARD (earlier entries) is strictly worse. "
+        "All parameters live in pmlab/presets.py (one preset = one "
+        "strategy, shared by paper, the real pilot and this dashboard).",
     "zleadx":
-        "FIXATIOZ À SEUIL z RENFORCÉ (z≥1.5 au lieu de 1.0). Le sweep profond montre "
-        "que monter le seuil bat z≥1.0 en EV/$ ET en stabilité jour partout, surtout "
-        "en 5m : btc-5m +0.039 / eth-5m +0.043, jours+ 90% (vs ~85% à z≥1.0). Moins "
-        "de paris (gate plus strict). Forward-test pour confirmer le gain net en live.",
+        "FIXATIOZ WITH A STRENGTHENED z THRESHOLD (z≥1.5 instead of 1.0). The deep sweep shows "
+        "that raising the threshold beats z≥1.0 in EV/$ AND in day-level stability everywhere, especially "
+        "on 5m: btc-5m +0.039 / eth-5m +0.043, positive days 90% (vs ~85% at z≥1.0). Fewer "
+        "bets (stricter gate). Forward-test to confirm the net gain live.",
     "zleadn":
-        "FIXATIOZ À BANDE RESSERRÉE 0,85–0,90. Même moteur que zlead (favori extrême + "
-        "plancher de lead vol-normalisé z≥1, fenêtre d'entrée élargie 4–6,75 min), mais "
-        "le plafond de favori descend de 0,95 à 0,90 : le sweep de bande par coin montre "
-        "que la prime favori-longshot se CONCENTRE sur le favori 0,85–0,90 — les favoris "
-        "profonds 0,90+ sont morts (on surpaie un côté quasi déjà réglé). La bande "
-        "0,85–0,90 bat 0,85–0,95 hors-échantillon sur BTC comme sur ETH en 15m. Même "
-        "plancher de lead, bande plus étroite → moins de paris mais mieux ciblés. "
-        "Forward-test paper.",
+        "FIXATIOZ WITH A NARROWED BAND 0.85–0.90. Same engine as zlead (extreme favorite + "
+        "vol-normalized lead floor z≥1, widened entry window 4–6.75 min), but "
+        "the favorite cap drops from 0.95 to 0.90: the per-coin band sweep shows "
+        "the favorite-longshot premium CONCENTRATES on the 0.85–0.90 favorite — deep "
+        "favorites 0.90+ are dead (you overpay a side that is nearly settled). The "
+        "0.85–0.90 band beats 0.85–0.95 out-of-sample on both BTC and ETH on 15m. Same "
+        "lead floor, narrower band → fewer bets but better targeted. "
+        "Paper forward-test.",
     "favorite_cheap":
-        "RETIRÉ 20/06 — bande resserrée 0,85–0,88. Semblait le plus rentable "
-        "(10 j : +0,121/$) mais c'était un artefact de 64 échantillons : sur 40 j "
-        "il est MORT (OOS −0,007/$, win = prix) ET mort sur ETH (−0,008). La "
-        "preuve vivante que le tripwire à grand n est le seul juge — la mort de "
-        "coagula, attrapée avant de saigner.",
+        "RETIRED 20/06 — narrowed band 0.85–0.88. Looked the most profitable "
+        "(10 d: +0.121/$) but it was a 64-sample artifact: over 40 d "
+        "it is DEAD (OOS −0.007/$, win = price) AND dead on ETH (−0.008). Living "
+        "proof that the large-n tripwire is the only judge — coagula's death, "
+        "caught before it bled.",
     "favorite_vollead":
-        "FIXATIO + FILTRE VOL — l'union des deux angles morts du moissonneur par "
-        "le prix seul : le favori-tempête (haute vol, sur le point de basculer) "
-        "ET le favori mou (mouvement non établi). Meilleure EV/$ OOS du backtest, "
-        "au prix d'un volume moindre. La conjonction des deux purifications.",
+        "FIXATIO + VOL FILTER — the union of the price-only harvester's two blind "
+        "spots: the storm favorite (high vol, about to flip) "
+        "AND the soft favorite (move not established). Best OOS EV/$ of the backtest, "
+        "at the cost of lower volume. The conjunction of the two purifications.",
     "favorite_conviction":
-        "Mêmes paris que favorite_vollead (favori net, Bitcoin déjà engagé, marché "
-        "calme), mais la MISE varie : plus grosse quand le pari est plus sûr "
-        "(favori moins cher = prime plus grasse, mouvement bien établi) et plus "
-        "petite sinon. Le sizing est backtesté ; il améliore la courbe en dollars "
-        "sans changer l'avantage par dollar de favorite_vollead.",
+        "Same bets as favorite_vollead (clean favorite, Bitcoin already committed, calm "
+        "market), but the STAKE varies: bigger when the bet is safer "
+        "(cheaper favorite = fatter premium, well-established move) and smaller "
+        "otherwise. The sizing is backtested; it improves the dollar curve "
+        "without changing favorite_vollead's per-dollar edge.",
     "favorite_mk":
-        "RUBEDO À ENTRÉE MAKER. Au lieu de traverser l'ask (taker : haircut 2 ¢ + "
-        "frais), pose un bid passif au prix du favori ; le carnet le remplit (0,7 "
-        "de la taille, sans frais) quand le marché traverse, sinon on croise en "
-        "taker tard dans la fenêtre — ainsi on ne RATE jamais un favori parti tout "
-        "droit (côté raté = 100 % de gagnantes, le piège du maker pur). Backtest "
-        "26/06 : per-$ EV bat le jumeau taker dans toutes les configs, y compris la "
-        "tranche OOS 15m ; pire-cas = taker. Forward-test paper — la magnitude n'est "
-        "pas validable OOS sur la tape en cache (régime sans perdant en 15m, IS pur "
-        "en 5m). research/backtest_maker_entry.py.",
+        "RUBEDO WITH MAKER ENTRY. Instead of crossing the ask (taker: 2¢ haircut + "
+        "fees), it posts a passive bid at the favorite's price; the book fills it (0.7 "
+        "of the size, no fees) when the market crosses, otherwise we cross as "
+        "taker late in the window — so we never MISS a favorite that ran straight "
+        "up (the missed side = 100% winners, the pure-maker trap). Backtest "
+        "26/06: per-$ EV beats the taker twin in every config, including the "
+        "15m OOS slice; worst case = taker. Paper forward-test — the magnitude isn't "
+        "OOS-validatable on the cached tape (loser-free regime on 15m, pure IS "
+        "on 5m). research/backtest_maker_entry.py.",
     "favorite_vollead_mk":
-        "CONIUNCTIO À ENTRÉE MAKER. Les gates validés (favori net + lead 6 bps + "
-        "filtre vol) avec la même entrée maker+fallback que favorite_mk. Teste le gain "
-        "d'exécution (~2,5 ¢/$) sur l'edge réellement déployé. Le gate sélectif "
-        "capte un peu MOINS du gain maker (favoris très établis = peu de wobble "
-        "sous le prix d'entrée → moins de fills passifs), mais reste ≥ taker.",
+        "CONIUNCTIO WITH MAKER ENTRY. The validated gates (clean favorite + 6 bps lead + "
+        "vol filter) with the same maker+fallback entry as favorite_mk. Tests the execution "
+        "gain (~2.5¢/$) on the actually-deployed edge. The selective gate "
+        "captures a bit LESS of the maker gain (very established favorites = little wobble "
+        "below the entry price → fewer passive fills), but stays ≥ taker.",
     "zleadmk":
-        "FIXATIOZ À ENTRÉE MAKER. Le seuil de lead vol-normalisé (z ≥ 1, le "
-        "généralisateur cross-actif qui pilote la course) avec l'entrée maker+"
-        "fallback de favorite_mk : bid passif au prix du favori (0,7 de la taille, "
-        "sans frais), traversée taker tard dans la fenêtre si non rempli — jamais "
-        "rater un favori parti tout droit. Forward-test paper sur BTC+ETH du gain "
-        "d'exécution (~2,5 ¢/$) sur l'edge déployé ; jumeau taker = zlead. La "
-        "magnitude n'est pas validable OOS sur la tape en cache (FINDINGS) — le "
-        "forward-test réglé à l'oracle est le juge. research/backtest_maker_entry.py.",
+        "FIXATIOZ WITH MAKER ENTRY. The vol-normalized lead threshold (z ≥ 1, the "
+        "cross-asset generalizer driving the race) with favorite_mk's maker+"
+        "fallback entry: passive bid at the favorite's price (0.7 of the size, "
+        "no fees), taker cross late in the window if unfilled — never "
+        "miss a favorite that ran straight up. Paper forward-test on BTC+ETH of the "
+        "execution gain (~2.5¢/$) on the deployed edge; taker twin = zlead. The "
+        "magnitude isn't OOS-validatable on the cached tape (FINDINGS) — the "
+        "oracle-settled forward-test is the judge. research/backtest_maker_entry.py.",
     "scalp":
-        "PROVISION DE LIQUIDITÉ — pas un pari sur l'issue, un pari sur le PRIX. Le "
-        "carnet mince SUR-RÉAGIT au flux pressé : après que le mid plonge ~5 ¢ sous "
-        "sa réf EWMA courte, il REMONTE de +6,5 ¢ sur 30 s en 5m (recherche 2026-06-25, "
-        "n=4082, ~9σ, FILL-INDEPENDENT sur la tape exécutée ; +3,5-5,5 ¢ en 15m) vs "
-        "une baseline ≈0. On pose un bid passif sous la réf des DEUX côtés (un creux "
-        "Down = un pop Up) ; quand un vendeur pressé traverse (0,7 de la taille, sans "
-        "frais maker — le MÊME modèle d'anti-sélection qui a démasqué le maker "
-        "directionnel à −0,015 en live), on est long le creux. On revend au rebond "
-        "(maker, sans frais) ; si pas de revert avant MAX_HOLD ou la clôture, on coupe "
-        "en taker — jamais porté au règlement. POURQUOI CE N'EST PAS LE MAKER "
-        "DIRECTIONNEL TUÉ : celui-là achetait-et-tenait le favori (fills adverses au "
-        "moment où il faiblit) ; ici on SORT en quelques secondes, l'anti-sélection de "
-        "règlement ne s'applique pas. RISQUE HONNÊTE : le +6,5 ¢ est réel et "
-        "fill-independent, mais la CAPTURE ne l'est pas — il faut des fills maker sur "
-        "un carnet mince au poll ~8 s (les creux rapides qui revertent en un tick sont "
-        "ratés). Seul le paper live, qui remplit contre le vrai exec_book, dit si le "
-        "revert est capturable. Tripwire : si les aller-retours nets ≤ 0 sur ~150 "
-        "clôtures, le signal ne survit pas à l'exécution — on retire. pmlab/scalp.py.",
+        "LIQUIDITY PROVISION — not a bet on the outcome, a bet on the PRICE. The "
+        "thin book OVER-REACTS to hurried flow: after the mid dives ~5¢ below "
+        "its short EWMA reference, it BOUNCES back +6.5¢ over 30s on 5m (research 2026-06-25, "
+        "n=4082, ~9σ, FILL-INDEPENDENT on the executed tape; +3.5-5.5¢ on 15m) vs "
+        "a baseline ≈0. We post a passive bid below the reference on BOTH sides (a Down "
+        "dip = an Up pop); when a hurried seller crosses (0.7 of the size, no "
+        "maker fees — the SAME anti-selection model that unmasked the directional "
+        "maker at −0.015 live), we are long the dip. We sell back on the rebound "
+        "(maker, no fees); if no revert before MAX_HOLD or the close, we cut "
+        "as taker — never carried to settlement. WHY THIS IS NOT THE KILLED "
+        "DIRECTIONAL MAKER: that one bought-and-held the favorite (adverse fills right "
+        "as it weakens); here we EXIT within seconds, settlement anti-selection "
+        "doesn't apply. HONEST RISK: the +6.5¢ is real and "
+        "fill-independent, but the CAPTURE is not — it needs maker fills on "
+        "a thin book at ~8s poll (fast dips that revert in one tick are "
+        "missed). Only live paper, which fills against the real exec_book, tells whether the "
+        "revert is capturable. Tripwire: if net round-trips ≤ 0 over ~150 "
+        "closes, the signal doesn't survive execution — we retire it. pmlab/scalp.py.",
     "scalpx":
-        "SCALP À CREUX PLUS PROFONDS (enter 6 ¢ / target 4 ¢ au lieu de 4/3). Vise "
-        "les sur-réactions plus marquées : moins d'aller-retours, plus gros rebond "
-        "visé chacun. Même mécanique, même tripwire (P&L réalisé net sur ~150 clôtures).",
+        "SCALP WITH DEEPER DIPS (enter 6¢ / target 4¢ instead of 4/3). Targets "
+        "the more pronounced over-reactions: fewer round-trips, bigger rebound "
+        "aimed for each. Same mechanics, same tripwire (net realized P&L over ~150 closes).",
 }
 
 # Per-strategy priors from the OOS backtest (research/backtest_engine.py +
@@ -539,7 +539,7 @@ def site_config() -> dict:
         "FAMILY": FAMILY, "EVENTS": list(EVENT_STRATS), "COPY": list(COPY_STRATS),
         "BTCURVE": BTCURVES,
         # preset gate params (band, lead floor, entry slot enter_lo/hi) — the front-end
-        # renders the human "fenêtre d'entrée" + gate summary from this, no JS duplicate.
+        # renders the human "entry window" + gate summary from this, no JS duplicate.
         "PRESETS": {k: p.config() for k, p in _PRESETS.items()},
         # per-coin entry-slot (enter_lo) overrides — so the UI shows the REAL slot per coin
         "COIN_SLOTS": _COIN_SLOTS,
@@ -723,7 +723,7 @@ def _collect_one_pilot(pid: str, entry: dict) -> dict:
     bank = stake.get("bankroll", 20.0)
     # P&L = realized trading result (sum of settled pnl), NOT capital−start: the
     # wallet balance also moves on deposits/withdrawals, which are not gains. The
-    # cumulative curve (l'évolution des résultats) and its drawdown are read off
+    # cumulative curve (how results evolve) and its drawdown are read off
     # the same settled pnl, so both are deposit-immune.
     realized = cum_peak = realized_dd = 0.0
     curve = []
@@ -874,11 +874,11 @@ def _launch_pilot(cfg: dict, mode: str, state_dir: str, log_path: str) -> tuple:
     the entry gate already burned us by living in two code paths)."""
     if mode == "live":
         if not os.environ.get("POLY_PRIVATE_KEY"):
-            return None, {"ok": False, "msg": "POLY_PRIVATE_KEY absent de l'env du dashboard "
-                          "— configure-le sur le VPS (voir docs/SETUP-LIVE.md)"}
+            return None, {"ok": False, "msg": "POLY_PRIVATE_KEY missing from the dashboard env "
+                          "— configure it on the VPS (see docs/SETUP-LIVE.md)"}
         venv_py = os.path.join(os.getcwd(), ".venv-live", "bin", "python")
         if not os.path.exists(venv_py):
-            return None, {"ok": False, "msg": ".venv-live absent — crée-le : python3 -m venv "
+            return None, {"ok": False, "msg": ".venv-live missing — create it: python3 -m venv "
                           ".venv-live && .venv-live/bin/pip install -r requirements-live.txt"}
         env = os.environ.copy()
         env["POLY_LIVE"] = "1"
@@ -936,8 +936,8 @@ def _supervise_pilots_once() -> None:
                 entry["mode"], entry["pid"] = "stopped", None
                 _restart_log[pid_id] = []
                 changed = True
-                m = (f"🛑 pilote {pid_id} en CRASH-LOOP (≥{_RESTART_MAX}×/"
-                     f"{_RESTART_WINDOW // 60}min) → mis en PAUSE par le superviseur, à investiguer")
+                m = (f"🛑 pilot {pid_id} in CRASH-LOOP (≥{_RESTART_MAX}×/"
+                     f"{_RESTART_WINDOW // 60}min) → PAUSED by the supervisor, needs investigation")
                 print(f"[supervise] {m}")
                 try: notify(m)
                 except Exception: pass
@@ -945,13 +945,13 @@ def _supervise_pilots_once() -> None:
             mode = entry["mode"]
             pid, err = _launch_pilot(entry["config"], mode, entry["state_dir"], entry["log"])
             if err:                                       # live path not ready (no key / no venv)
-                print(f"[supervise] {pid_id}: relance impossible — {err.get('msg')}")
+                print(f"[supervise] {pid_id}: cannot restart — {err.get('msg')}")
                 continue
             entry["pid"], entry["started"] = pid, now
             hist.append(now); _restart_log[pid_id] = hist
             changed = True
             tag = "🔴 RÉEL" if mode == "live" else "DRY"
-            m = f"♻️ pilote {pid_id} ({tag}) était mort → relancé par le superviseur (pid {pid})"
+            m = f"♻️ pilot {pid_id} ({tag}) was dead → restarted by the supervisor (pid {pid})"
             print(f"[supervise] {m}")
             try: notify(m)
             except Exception: pass
@@ -1012,7 +1012,7 @@ def _pilot_control_impl(action: str, params: dict | None = None) -> dict:
 
         if action == "resume":                     # relaunch a paused pilot, same config + mode
             if alive:
-                return {"ok": False, "msg": f"ce pilote tourne déjà : {pid_id}"}
+                return {"ok": False, "msg": f"this pilot is already running: {pid_id}"}
             mode = entry.get("armed_mode") or "dry"     # absent (legacy/migrated) -> safe DRY default
             pid, err = _launch_pilot(entry["config"], mode, entry["state_dir"], entry["log"])
             if err:
@@ -1040,16 +1040,16 @@ def _pilot_control_impl(action: str, params: dict | None = None) -> dict:
                     return err
                 entry.update(mode=mode, pid=pid, started=int(time.time()))
             _save_registry(reg)
-            return {"ok": True, "msg": f"pilote mis à jour : {pid_id}"
-                    + ("" if alive else " (appliqué à la reprise)")}
+            return {"ok": True, "msg": f"pilot updated: {pid_id}"
+                    + ("" if alive else " (applied on restart)")}
 
         # forget: drop a stopped pilot from the list. Its state dir is left on disk,
         # so restarting the same config re-adopts the track record (clean declutter).
         if alive:
-            return {"ok": False, "msg": "mets-le en pause d'abord, puis supprime-le"}
+            return {"ok": False, "msg": "pause it first, then delete it"}
         del reg[pid_id]
         _save_registry(reg)
-        return {"ok": True, "msg": f"pilote supprimé : {pid_id}"}
+        return {"ok": True, "msg": f"pilot deleted: {pid_id}"}
 
     if action not in ("start_dry", "start_live"):
         return {"ok": False, "msg": "action inconnue"}
@@ -1058,7 +1058,7 @@ def _pilot_control_impl(action: str, params: dict | None = None) -> dict:
     pid_id = _pilot_id(cfg)
     existing = reg.get(pid_id)
     if existing and _pid_alive(existing.get("pid")):
-        return {"ok": False, "msg": f"ce pilote tourne déjà : {pid_id} — arrête-le d'abord"}
+        return {"ok": False, "msg": f"this pilot is already running: {pid_id} — stop it first"}
     # Reuse a seasoned state dir/log on restart; a brand-new config gets its own
     # (the legacy live_state/ is only ever reused via its migrated entry).
     state_dir = existing["state_dir"] if existing else f"live_state_{pid_id}"
@@ -1074,10 +1074,10 @@ def _pilot_control_impl(action: str, params: dict | None = None) -> dict:
     _save_registry(reg)
     if mode == "dry":
         return {"ok": True, "msg": f"DRY-RUN : {cfg['strategy']} {cfg['underlying'].upper()} {cfg['interval']}"}
-    sz = (f"pondéré {cfg['weight_pct']*100:.0f} % du capital (max ${cfg['bet_max']:.0f})"
+    sz = (f"weighted {cfg['weight_pct']*100:.0f}% of capital (max ${cfg['bet_max']:.0f})"
           if cfg["weighted"] else f"flat ${cfg['stake']:.0f}/pari")
-    return {"ok": True, "msg": f"🔴 RÉEL armé : {cfg['strategy']} {cfg['underlying'].upper()} "
-            f"{cfg['interval']} · {sz} · capital = wallet réel partagé"}
+    return {"ok": True, "msg": f"🔴 REAL armed: {cfg['strategy']} {cfg['underlying'].upper()} "
+            f"{cfg['interval']} · {sz} · capital = shared real wallet"}
 
 
 # =================================================================== rewards-MM ===
@@ -1161,11 +1161,11 @@ def _launch_mm(cfg: dict, mode: str, state_dir: str, log_path: str) -> tuple:
     POLY_BUILDER_* in env). Returns (pid, None) or (None, error_dict)."""
     if mode == "live":
         if not os.environ.get("POLY_PRIVATE_KEY"):
-            return None, {"ok": False, "msg": "POLY_PRIVATE_KEY absent de l'env du dashboard "
-                          "— configure-le sur le VPS (voir docs/SETUP-LIVE.md)"}
+            return None, {"ok": False, "msg": "POLY_PRIVATE_KEY missing from the dashboard env "
+                          "— configure it on the VPS (see docs/SETUP-LIVE.md)"}
         venv_py = os.path.join(os.getcwd(), ".venv-live", "bin", "python")
         if not os.path.exists(venv_py):
-            return None, {"ok": False, "msg": ".venv-live absent — crée-le : python3 -m venv "
+            return None, {"ok": False, "msg": ".venv-live missing — create it: python3 -m venv "
                           ".venv-live && .venv-live/bin/pip install -r requirements-live.txt"}
         env = os.environ.copy()
         env["POLY_LIVE"] = "1"
@@ -1290,7 +1290,7 @@ def _mm_control_impl(action: str, params: dict | None = None) -> dict:
             return {"ok": True, "msg": f"rewardMM en pause : {mid}"}
         if action == "resume":
             if alive:
-                return {"ok": False, "msg": f"ce runner tourne déjà : {mid}"}
+                return {"ok": False, "msg": f"this runner is already running: {mid}"}
             mode = entry.get("armed_mode") or "dry"
             pid, err = _launch_mm(entry["config"], mode, entry["state_dir"], entry["log"])
             if err:
@@ -1300,10 +1300,10 @@ def _mm_control_impl(action: str, params: dict | None = None) -> dict:
             return {"ok": True, "msg": f"rewardMM repris ({'🔴 RÉEL' if mode == 'live' else 'DRY'}) : {mid}"}
         # forget: drop a stopped runner; its state dir stays on disk (re-armable).
         if alive:
-            return {"ok": False, "msg": "mets-le en pause d'abord, puis supprime-le"}
+            return {"ok": False, "msg": "pause it first, then delete it"}
         del reg[mid]
         _save_mm_registry(reg)
-        return {"ok": True, "msg": f"rewardMM supprimé : {mid}"}
+        return {"ok": True, "msg": f"rewardMM deleted: {mid}"}
 
     if action not in ("start_dry", "start_live"):
         return {"ok": False, "msg": "action inconnue"}
@@ -1312,7 +1312,7 @@ def _mm_control_impl(action: str, params: dict | None = None) -> dict:
     mid = _mm_id(cfg)
     existing = reg.get(mid)
     if existing and _pid_alive(existing.get("pid")):
-        return {"ok": False, "msg": f"ce runner tourne déjà : {mid} — arrête-le d'abord"}
+        return {"ok": False, "msg": f"this runner is already running: {mid} — stop it first"}
     state_dir = existing["state_dir"] if existing else f"rewardmm_{cfg['underlying']}_{cfg['interval']}"
     log_path = existing["log"] if existing else f"rewardmm_{cfg['underlying']}_{cfg['interval']}.log"
     mode = "live" if action == "start_live" else "dry"
@@ -1325,8 +1325,8 @@ def _mm_control_impl(action: str, params: dict | None = None) -> dict:
     if mode == "dry":
         return {"ok": True, "msg": f"DRY-RUN rewardMM : {cfg['underlying'].upper()} {cfg['interval']} "
                 f"· mint ${cfg['mint_usd']:.0f} clip {cfg['clip']:.0f}"}
-    return {"ok": True, "msg": f"🔴 RÉEL armé : rewardMM {cfg['underlying'].upper()} {cfg['interval']} "
-            f"· mint ${cfg['mint_usd']:.0f} clip {cfg['clip']:.0f} — argent réel (wallet partagé)"}
+    return {"ok": True, "msg": f"🔴 REAL armed: rewardMM {cfg['underlying'].upper()} {cfg['interval']} "
+            f"· mint ${cfg['mint_usd']:.0f} clip {cfg['clip']:.0f} — real money (shared wallet)"}
 
 
 # rewardMM supervisor — revive a crashed/rebooted armed harvester, same crash-loop brake as
@@ -1352,7 +1352,7 @@ def _supervise_mm_once() -> None:
                 _mm_restart_log[mid] = []
                 changed = True
                 m = (f"🛑 rewardMM {mid} en CRASH-LOOP (≥{_RESTART_MAX}×/"
-                     f"{_RESTART_WINDOW // 60}min) → mis en PAUSE par le superviseur")
+                     f"{_RESTART_WINDOW // 60}min) → PAUSED by the supervisor")
                 print(f"[supervise-mm] {m}")
                 try: notify(m)
                 except Exception: pass
@@ -1366,7 +1366,7 @@ def _supervise_mm_once() -> None:
             hist.append(now); _mm_restart_log[mid] = hist
             changed = True
             tag = "🔴 RÉEL" if mode == "live" else "DRY"
-            m = f"♻️ rewardMM {mid} ({tag}) était mort → relancé par le superviseur (pid {pid})"
+            m = f"♻️ rewardMM {mid} ({tag}) was dead → restarted by the supervisor (pid {pid})"
             print(f"[supervise-mm] {m}")
             try: notify(m)
             except Exception: pass
@@ -1393,15 +1393,28 @@ def collect(name: str, light: bool = False) -> dict:
     f = sd / "journal.csv"
     if f.exists():
         with f.open() as fh:
-            trades = list(csv.DictReader(fh))
-            for t in trades:
-                t["ts"] = int(t["ts"])
+            rows = list(csv.DictReader(fh))
+        # A hard reboot (VPS, 2026-07-15) leaves ext4 blocks allocated but
+        # zero-filled at the tail of an appended file: some rows come back as
+        # NUL runs. Skip what does not parse instead of killing /all.
+        for t in rows:
+            try:
+                t["ts"] = int(t.get("ts") or "")
+            except (TypeError, ValueError):
+                continue
+            trades.append(t)
     f = sd / "equity.csv"
     if f.exists():
         rows = f.read_text().strip().splitlines()
-        step = max(1, len(rows) // 600)            # cap points sent to the page
-        equity = [[int(a), float(b)] for a, b in
-                  (r.split(",") for r in rows[::step])]
+        points = []
+        for r in rows:
+            a, _, b = r.partition(",")
+            try:
+                points.append([int(a), float(b)])
+            except ValueError:                     # same NUL-run corruption
+                continue
+        step = max(1, len(points) // 600)          # cap points sent to the page
+        equity = points[::step]
     tick = None
     f = sd / "tick.json"
     if f.exists():
@@ -1744,14 +1757,14 @@ if __name__ == "__main__":
     # (dashboard stays DRY-only). Vars already in the env are kept (explicit env wins).
     _armed_keys = load_live_env()
     if "POLY_PRIVATE_KEY" in os.environ:
-        print(f"real-money env prête (clé présente{' — chargée depuis .live_env' if 'POLY_PRIVATE_KEY' in _armed_keys else ''})")
+        print(f"real-money env ready (key present{' — loaded from .live_env' if 'POLY_PRIVATE_KEY' in _armed_keys else ''})")
     # Fail loud if the front-end assets did not ship (e.g. an rsync that forgot
     # webdash_assets/) — better a clear boot error caught by the watchdog than a
     # blank dashboard serving 500s.
     missing = [] if PILOT_API else [f for f in REQUIRED_ASSETS if not (ASSETS / f).exists()]
     if missing:
-        sys.exit(f"front-end assets manquants dans {ASSETS}: {', '.join(missing)} "
-                 "— resynchronise webdash_assets/ (voir CLAUDE.md déploiement)")
+        sys.exit(f"front-end assets missing in {ASSETS}: {', '.join(missing)} "
+                 "— resync webdash_assets/ (see CLAUDE.md, deployment)")
     # The favorite race: the favorite-longshot harvester + backtest-derived
     # variants. The VPS passes explicit --strat; this is the local default.
     specs = a.strat or ([] if PILOT_API else      # the AWS engine serves pilots ONLY, no paper
@@ -1781,5 +1794,5 @@ if __name__ == "__main__":
                          daemon=True).start()
         print(f"superviseur pilotes actif — sweep {PILOT_SUPERVISE_EVERY}s")
     elif PILOT_REMOTE:
-        print(f"mode display: onglet pilotes proxifié vers {PILOT_REMOTE}")
+        print(f"display mode: pilots tab proxied to {PILOT_REMOTE}")
     DashServer((a.host, a.port), Handler).serve_forever()

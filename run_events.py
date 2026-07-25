@@ -44,7 +44,7 @@ def main():
     h = EventHarvester(state_dir=a.state_dir, scan_cfg=cfg, bankroll=a.bankroll,
                        stake=a.stake, max_positions=a.max_positions, log=log)
     log(f"event harvester up — {a.name} | fav {a.fav_lo}-{a.fav_hi} | "
-        f"liq ${a.liq_min:,.0f}-${a.liq_max:,.0f} | {a.days_min}-{a.days_max}j"
+        f"liq ${a.liq_min:,.0f}-${a.liq_max:,.0f} | {a.days_min}-{a.days_max}d"
         f"{f' | match={a.match!r}' if a.match else ''} | {h.status()}")
     n = 0
     while a.ticks is None or n < a.ticks:

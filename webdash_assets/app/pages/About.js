@@ -1,20 +1,20 @@
-// The method — what this is, in plain French. Lifted out of the overview so the
-// home screen stays a dashboard, not a manual. Closes with "le bestiaire" : one
+// The method — what this is, in plain English. Lifted out of the overview so the
+// home screen stays a dashboard, not a manual. Closes with "the bestiary": one
 // complete description per DEPLOYED brain, read straight from CONFIG (labels,
 // taglines, gates, technical paragraphs) so it never drifts from the code.
 import { html } from '../preact.js';
 import { CONFIG } from '../api.js';
 import { partsOf, gateSummary, fmt0 } from '../format.js';
 
-// Ordre d'affichage des coins dans le tableau de capacité (puis tout extra du /config).
-// Dérivé du registre central servi par /config (CONFIG.COINS) ; littéral en secours si la
-// config n'est pas encore chargée. Accesseur (pas une const de module) car CONFIG est
-// réassigné par loadConfig() avant le rendu.
+// Display order of coins in the capacity table (then any extra from /config).
+// Derived from the central registry served by /config (CONFIG.COINS); literal fallback if the
+// config isn't loaded yet. Accessor (not a module const) because CONFIG is
+// reassigned by loadConfig() before render.
 const coinOrder = () => (CONFIG.COINS && CONFIG.COINS.length)
   ? CONFIG.COINS : ["btc", "eth", "sol", "xrp", "doge", "bnb"];
 
 // Distinct deployed brains, in lineup order, each with the coins/frames it runs on.
-// A "stratégie" = a brain (zlead, zleadmk, …); coin/frame are its parameterisations,
+// A "strategy" = a brain (zlead, zleadmk, …); coin/frame are its parameterisations,
 // so we describe the brain once and list where it's deployed.
 function deployedBrains(){
   const order = [], meta = {};
@@ -44,14 +44,14 @@ function StratCard({brain, coins, frames}){
         ${where ? html`<span class="strat-where">${where}</span>` : null}
       </header>
       ${tagline ? html`<p class="strat-tag">${tagline}</p>` : null}
-      ${gate ? html`<p class="strat-meta"><b>Réglage</b> · ${gate}</p>` : null}
+      ${gate ? html`<p class="strat-meta"><b>Settings</b> · ${gate}</p>` : null}
       ${desc ? html`<p class="strat-desc">${desc}</p>` : null}
     </article>`;
 }
 
-// La capacité des carnets : la mise max absorbable par coin ET par frame (profondeur sur
-// l'ask du favori entre 0,85 et 0,95), qui plafonne CHAQUE pari (paper ET pilote réel).
-// Lue depuis /config (COIN_DEPTH = {coin:{frame:$}}). 5m et 15m = carnets distincts.
+// Book capacity: the max absorbable stake per coin AND per frame (depth on the
+// favorite's ask between 0.85 and 0.95), which caps EVERY bet (paper AND real pilot).
+// Read from /config (COIN_DEPTH = {coin:{frame:$}}). 5m and 15m = separate books.
 function CapacityTable(){
   const depth = CONFIG.COIN_DEPTH || {};
   const frames = (CONFIG.FRAMES && CONFIG.FRAMES.length) ? CONFIG.FRAMES : ["5m", "15m"];
@@ -62,30 +62,30 @@ function CapacityTable(){
   if(!coins.length) return null;
   return html`
     <section class="panel">
-      <div class="panel-head"><h2>Capacité des carnets — la mise max par coin <i>et par frame</i></h2>
-        <span class="aside">départ $${fmt0(CONFIG.START || 100)} · ${pct} % du capital par pari</span></div>
+      <div class="panel-head"><h2>Book capacity — the max stake per coin <i>and per frame</i></h2>
+        <span class="aside">$${fmt0(CONFIG.START || 100)} start · ${pct}% of capital per bet</span></div>
       <div class="panel-body">
-        <p class="mut" style="margin:0 0 14px;max-width:74ch;line-height:1.6">Chaque pari fait
-          <b>${pct} % du capital</b>, <b>plafonné à la profondeur du carnet</b> du favori — le $ qu'<b>UN
-          seul acteur</b> peut filler sur l'ask <b>entre 0,85 et 0,95</b> <i>pendant que les autres
-          achètent aussi</i>. Mesuré <b>par marché</b> (5m et 15m = carnets distincts) comme la médiane
-          du <b>plus gros wallet seul</b> par fenêtre — pas le flux agrégé, qui est partagé entre 9 à
-          185 acheteurs simultanés (on n'en capte que ~15–35 % sur les coins liquides). Source :
-          historique des trades, <code>tools/measure_capacity.py</code>. Le paper ET le pilote réel
-          utilisent ce plafond.</p>
+        <p class="mut" style="margin:0 0 14px;max-width:74ch;line-height:1.6">Each bet is
+          <b>${pct}% of capital</b>, <b>capped at the book depth</b> of the favorite — the $ that <b>a
+          SINGLE actor</b> can fill on the ask <b>between 0.85 and 0.95</b> <i>while everyone else is
+          buying too</i>. Measured <b>per market</b> (5m and 15m = separate books) as the median of the
+          <b>largest single wallet</b> per window — not the aggregate flow, which is shared among 9 to
+          185 simultaneous buyers (we capture only ~15–35% of it on liquid coins). Source:
+          trade history, <code>tools/measure_capacity.py</code>. Paper AND the real pilot
+          use this cap.</p>
         <table class="tbl">
-          <thead><tr><th>Coin</th>${frames.map(f => html`<th>Mise max ${f}</th>`)}</tr></thead>
+          <thead><tr><th>Coin</th>${frames.map(f => html`<th>Max stake ${f}</th>`)}</tr></thead>
           <tbody>
             ${coins.map(c => html`<tr>
               <td><b>${c.toUpperCase()}</b></td>
               ${frames.map(f => { const cap = (depth[c] || {})[f]; const dead = cap != null && cap <= 12;
-                return html`<td class=${"num" + (dead ? " mut" : "")}>${cap != null ? html`$${fmt0(cap)}` : "—"}${dead ? html` <span class="mut">— quasi mort</span>` : ""}</td>`; })}
+                return html`<td class=${"num" + (dead ? " mut" : "")}>${cap != null ? html`$${fmt0(cap)}` : "—"}${dead ? html` <span class="mut">— nearly dead</span>` : ""}</td>`; })}
             </tr>`)}
           </tbody>
         </table>
-        <p class="mut" style="margin:14px 0 0;max-width:74ch;line-height:1.6">Tant que ${pct} % du capital
-          reste sous ces plafonds, la mise compose ; au-delà, elle bute sur le carnet. BTC porte
-          l'essentiel de la capacité — et son <b>5m est plus profond que son 15m</b> (l'inverse des alts).</p>
+        <p class="mut" style="margin:14px 0 0;max-width:74ch;line-height:1.6">As long as ${pct}% of capital
+          stays under these caps, the stake compounds; beyond that, it hits the book. BTC carries
+          most of the capacity — and its <b>5m is deeper than its 15m</b> (the opposite of the alts).</p>
       </div>
     </section>`;
 }
@@ -94,41 +94,41 @@ export function About(){
   const brains = deployedBrains();
   return html`
     <div class="page-head">
-      <div><h1><span class="glyph">☉</span>La méthode</h1>
-        <p class="sub">Pourquoi ce robot parie, le seul juge qui décide si l'avantage est réel,
-          et ce que fait chaque stratégie en course.</p></div>
+      <div><h1><span class="glyph">☉</span>The method</h1>
+        <p class="sub">Why this bot bets, the only judge that decides whether the edge is real,
+          and what each strategy in the race does.</p></div>
     </div>
     <section class="panel"><div class="panel-body" style="max-width:74ch;line-height:1.7">
-      <p><b>Le marché.</b> Toutes les 5 ou 15 min, Polymarket paie selon que Bitcoin clôt au-dessus ou en
-        dessous de son ouverture. Vers la fin d'une fenêtre, un côté est déjà donné quasi gagnant — le
-        <b class="gold">favori</b> (coté 0,85–0,95).</p>
-      <p><b>L'edge.</b> La foule <b>surpaie</b> le côté presque mort (le <i>longshot</i>), donc le favori
-        est légèrement sous-coté. On l'achète et on porte jusqu'au règlement. Aucune sortie : c'est un pari
-        sur la <b>calibration des prix</b>, pas sur la direction de BTC. Le <i>magnum opus</i> : transmuter
-        ce minuscule biais en or, réglage après réglage.</p>
-      <p><b>Le payoff est brutalement asymétrique</b> — gagner rapporte ~+0,11, perdre coûte −1,00. Un
-        groupe de retournements fait mal. D'où les variantes (filtre de volatilité, plancher de lead) :
-        chacune purge un mode d'échec observé dans les journaux.</p>
-      <p><b>Le juge unique — le <span class="verd">tripwire</span>.</b> Sur ~150 paris, la réussite réelle
-        bat-elle le prix moyen payé ? Au-dessus → avantage réel. Égal ou en dessous → pas d'avantage, on
-        retire (c'est ainsi que les six cerveaux ésotériques d'origine sont morts). En dessous de 150 paris,
-        tout chiffre est du bruit (~4 paris/h).</p>
-      <p><b>Deux vérités, deux couleurs.</b> <span class="gold">L'or</span> = on a gagné de l'argent.
-        <span class="verd">Le vert-de-gris</span> = l'avantage est statistiquement prouvé. Une stratégie peut
-        être dans le vert sans être prouvée (chance), ou prouvée tout en étant momentanément dans le rouge.</p>
-      <p class="mut">Tout est en lecture seule sur les vraies APIs. Le paper trading n'envoie aucun ordre.
-        Seul <b>Le pilote</b> peut toucher de l'argent réel, et seulement une fois explicitement armé.</p>
+      <p><b>The market.</b> Every 5 or 15 minutes, Polymarket pays out on whether Bitcoin closes above or
+        below its open. Toward the end of a window, one side is already all but decided — the
+        <b class="gold">favorite</b> (priced 0.85–0.95).</p>
+      <p><b>The edge.</b> The crowd <b>overpays</b> for the nearly-dead side (the <i>longshot</i>), so the favorite
+        is slightly underpriced. We buy it and hold to settlement. No exit: it's a bet
+        on <b>price calibration</b>, not on BTC's direction. The <i>magnum opus</i>: transmute
+        this tiny bias into gold, one adjustment at a time.</p>
+      <p><b>The payoff is brutally asymmetric</b> — winning earns ~+0.11, losing costs −1.00. A
+        cluster of reversals hurts. Hence the variants (volatility filter, lead floor):
+        each purges a failure mode observed in the journals.</p>
+      <p><b>The single judge — the <span class="verd">tripwire</span>.</b> Over ~150 bets, does the real win
+        rate beat the average price paid? Above → real edge. Equal or below → no edge, we
+        retire it (that's how the six original esoteric brains died). Below 150 bets,
+        every number is noise (~4 bets/h).</p>
+      <p><b>Two truths, two colors.</b> <span class="gold">Gold</span> = we made money.
+        <span class="verd">Verdigris</span> = the edge is statistically proven. A strategy can
+        be in the green without being proven (luck), or proven while momentarily in the red.</p>
+      <p class="mut">Everything is read-only on the real APIs. Paper trading sends no orders.
+        Only <b>The pilot</b> can touch real money, and only once explicitly armed.</p>
     </div></section>
 
     <${CapacityTable} />
 
     <section class="panel">
-      <div class="panel-head"><h2>Le bestiaire — chaque stratégie en course</h2>
-        <span class="aside">${brains.length} cerveau${brains.length > 1 ? "x" : ""} · un moteur paramétré</span></div>
+      <div class="panel-head"><h2>The bestiary — every strategy in the race</h2>
+        <span class="aside">${brains.length} brain${brains.length > 1 ? "s" : ""} · one parameterised engine</span></div>
       <div class="panel-body">
-        <p class="mut" style="margin:0 0 16px;max-width:74ch;line-height:1.6">Une <b>stratégie</b> = un cerveau ;
-          le coin (BTC/ETH/SOL/XRP/DOGE/BNB) et la durée (5m/15m) ne sont que ses paramétrages. Toutes
-          parient le <b>même favori</b> — c'est UN edge décliné, pas N indépendants.</p>
+        <p class="mut" style="margin:0 0 16px;max-width:74ch;line-height:1.6">A <b>strategy</b> = a brain;
+          the coin (BTC/ETH/SOL/XRP/DOGE/BNB) and the duration (5m/15m) are just its parameterisations. All
+          of them bet the <b>same favorite</b> — it's ONE edge declined, not N independent ones.</p>
         <div class="strat-list">
           ${brains.map(b => html`<${StratCard} ...${b} />`)}
         </div>

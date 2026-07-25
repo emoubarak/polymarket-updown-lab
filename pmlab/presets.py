@@ -4,7 +4,7 @@ The whole live family is `zlead`: buy the extreme favorite with a vol-normalized
 lead floor, hold to settle. Everything else is a CUSTOMIZATION of zlead, expressed
 as fields — never a separate hand-written strategy:
 
-  • the entry slot (enter_lo/enter_hi)  — "plage de temps", a plain field override
+  • the entry slot (enter_lo/enter_hi)  — the "time slot", a plain field override
   • a MAKER entry                       — type "mk"
   • a narrower band 0.85-0.90           — type "n"
   • a stricter z floor (>=1.5)          — type "x"
@@ -121,26 +121,26 @@ class Type:
 # Each TYPE tweaks specific gate fields. Compose freely: zlead('n','mk') = narrow maker.
 # Add a dimension = add an entry here (its tag becomes part of the brain key).
 TYPES: dict[str, Type] = {
-    "n":  Type("bande resserrée 0,85–0,90 (la prime se concentre là ; favoris 0,90+ morts)",
+    "n":  Type("tightened band 0.85-0.90 (the premium concentrates there; 0.90+ favorites are dead)",
                {"max_fav": 0.90}),
-    "x":  Type("plancher de lead renforcé z≥1,5 (moins de paris, plus sûrs)",
+    "x":  Type("stricter lead floor z≥1.5 (fewer, safer bets)",
                {"min_lead_z": 1.5}),
-    "mk": Type("entrée maker : bid passif sans frais, traversée taker tardive si non rempli",
+    "mk": Type("maker entry: passive fee-free bid, late taker cross if unfilled",
                {"maker_entry": True}),
-    "a":  Type("veto BTC-align (alts) — DÉSORMAIS LE DÉFAUT de base zlead (autopsie pertes réelles "
-               "2026-06-28 : opposé 20% de pertes vs aligné 7%) ; type conservé comme alias explicite",
+    "a":  Type("BTC-align veto (alts) — NOW THE BASE zlead DEFAULT (real-money loss autopsy "
+               "2026-06-28: opposed 20% losses vs aligned 7%); type kept as an explicit alias",
                {"btc_align": True}),
-    "f":  Type("veto flux-longshot (alts) : skip si l'accumulation longshot pré-entrée / profondeur "
-               "≥ 2,5 (fade informé → favori plus à risque ; calibré 5m+15m, ADDITIF au type a, no-op btc)",
+    "f":  Type("longshot-flow veto (alts): skip if pre-entry longshot accumulation / depth "
+               "≥ 2.5 (informed fade → favorite more at risk; calibrated 5m+15m, ADDITIVE to type a, no-op on btc)",
                {"ls_flow_cap": 2.5}),
-    "p":  Type("FLAGSHIP optimal (alts) : veto BTC-align + TILT de mise flux-longshot (mise + sur les "
-               "fenêtres propres, − sur les sales, exposition ≈ constante). Le meilleur config MESURÉ "
-               "(90j : +~16% net vs base, à risque égal). no-op sur btc.",
+    "p":  Type("optimal FLAGSHIP (alts): BTC-align veto + longshot-flow stake TILT (stake up on clean "
+               "windows, down on dirty ones, ≈ constant exposure). The best MEASURED config "
+               "(90d: +~16% net vs base, at equal risk). no-op on btc.",
                {"btc_align": True, "ls_flow_cap": 2.5, "ls_flow_tilt": True}),
 }
 
-_BASE_TAGLINE = ("Favori extrême + plancher de lead vol-normalisé (z≥1), fenêtre d'entrée "
-                 "élargie (4–6,75 min) pour maximiser le PnL cumulé du jour.")
+_BASE_TAGLINE = ("Extreme favorite + vol-normalized lead floor (z≥1), widened entry "
+                 "window (4-6.75 min) to maximize the day's cumulative PnL.")
 
 
 def zlead(*types: str, live: bool = False, **overrides) -> Preset:
@@ -190,28 +190,28 @@ _ACTIVE = [
 # ==================================================================== ARCHIVE ===
 # Falsified non-zlead ancestors (research/FINDINGS.md). Kept constructible so research/
 # backtests can re-run them; NOT deployed, NOT armable, NOT in the dashboard lineup.
-# NOTE HISTORIQUE : ces stratégies falsifiées portaient des noms de code alchimiques
-# (favorite, favorite_vol, favorite_lead, favorite_vollead, favorite_cheap, favorite_conviction…) — renommés en clair pour la
-# publication ; le mapping est documenté dans research/FINDINGS.md.
+# HISTORICAL NOTE: these falsified strategies carried alchemical code names
+# (favorite, favorite_vol, favorite_lead, favorite_vollead, favorite_cheap, favorite_conviction…) — renamed to plain names for
+# publication; the mapping is documented in research/FINDINGS.md.
 _ARCHIVE = [
-    Preset("favorite", "Favori nu", "Favori extrême nu (0.85-0.95), hold. DEAD multi-mois.", "F",
+    Preset("favorite", "Bare favorite", "Bare extreme favorite (0.85-0.95), hold. DEAD multi-month.", "F",
            base="favorite", min_lead_z=0.0, enter_lo=0.35),
-    Preset("favorite_vol", "Favori + filtre vol", "Favori nu + filtre volatilité. DEAD.", "F",
+    Preset("favorite_vol", "Favorite + vol filter", "Bare favorite + volatility filter. DEAD.", "F",
            base="favorite_vol", min_lead_z=0.0, vol_cap=0.00056, enter_lo=0.35),
-    Preset("favorite_wide", "Favori élargi", "Favori + vol + plancher 0.80.", "F",
+    Preset("favorite_wide", "Widened favorite", "Favorite + vol + 0.80 floor.", "F",
            base="favorite_wide", min_lead_z=0.0, min_fav=0.80, vol_cap=0.00056, enter_lo=0.35),
-    Preset("favorite_lead", "Favori + lead bps", "Favori + plancher de lead 6bps. ~zéro.", "F",
+    Preset("favorite_lead", "Favorite + lead bps", "Favorite + 6bps lead floor. ~zero.", "F",
            base="favorite_lead", min_lead_z=0.0, min_lead_bps=6.0, enter_lo=0.35),
-    Preset("favorite_vollead", "Favori vol+lead", "Favori + lead 6bps + filtre vol.", "F",
+    Preset("favorite_vollead", "Favorite vol+lead", "Favorite + 6bps lead + vol filter.", "F",
            base="favorite_vollead", min_lead_z=0.0, vol_cap=0.00056, min_lead_bps=6.0, enter_lo=0.35),
-    Preset("favorite_cheap", "Favori le moins cher", "Favori le moins cher 0.85-0.88. FRAGILE.", "F",
+    Preset("favorite_cheap", "Cheapest favorite", "Cheapest favorite 0.85-0.88. FRAGILE.", "F",
            base="favorite_cheap", min_lead_z=0.0, max_fav=0.88, enter_lo=0.35),
-    Preset("favorite_conviction", "Favori mise-conviction", "Favori vol+lead + mise par conviction.", "F",
+    Preset("favorite_conviction", "Conviction-stake favorite", "Favorite vol+lead + conviction sizing.", "F",
            base="favorite_conviction", min_lead_z=0.0, vol_cap=0.00056, min_lead_bps=6.0,
            conviction_size=True, enter_lo=0.35),
-    Preset("favorite_mk", "Favori maker", "Favori nu + entrée maker.", "F",
+    Preset("favorite_mk", "Maker favorite", "Bare favorite + maker entry.", "F",
            base="favorite_mk", min_lead_z=0.0, maker_entry=True, enter_lo=0.35),
-    Preset("favorite_vollead_mk", "Favori vol+lead maker", "Favori vol+lead + entrée maker.", "F",
+    Preset("favorite_vollead_mk", "Favorite vol+lead maker", "Favorite vol+lead + maker entry.", "F",
            base="favorite_vollead_mk", min_lead_z=0.0, vol_cap=0.00056, min_lead_bps=6.0,
            maker_entry=True, enter_lo=0.35),
 ]

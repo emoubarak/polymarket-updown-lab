@@ -5,7 +5,7 @@
 import { html, useRef, useEffect } from '../preact.js';
 
 const AXIS = "#a99c80", GRID = "rgba(255,255,255,.05)", FONT = {family:"Plex Mono, monospace", size:10};
-const dt = ts => new Date(ts*1000).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+const dt = ts => new Date(ts*1000).toLocaleString("en-GB",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
 
 function datasets(series, base){
   const ds = series.map(s => ({
@@ -15,7 +15,7 @@ function datasets(series, base){
   }));
   if(base != null){
     const xs = series.flatMap(s => s.pts.map(p => p[0]));
-    if(xs.length) ds.push({ label: "départ", data: [{x:Math.min(...xs), y:base}, {x:Math.max(...xs), y:base}],
+    if(xs.length) ds.push({ label: "start", data: [{x:Math.min(...xs), y:base}, {x:Math.max(...xs), y:base}],
       // --ink-3 (#948668): the current WCAG-passing muted ink (the old #776c55 --ink-3 was
       // retired for failing AA); one notch dimmer than the AXIS, fitting a baseline reference.
       borderColor: "#948668", borderDash: [4,5], borderWidth: 1, pointRadius: 0, order: 99 });
@@ -46,11 +46,11 @@ export function LineChart({series, base, height = 270, single = false, xfmt}){
         plugins: {
           legend: single ? {display:false} : {position:"top", align:"end",
             labels: {color:AXIS, font:FONT, boxWidth:14, boxHeight:3, usePointStyle:false,
-              filter: it => it.text !== "départ"}},
+              filter: it => it.text !== "start"}},
           tooltip: {backgroundColor:"#15120b", borderColor:"#4f4330", borderWidth:1,
             titleColor:"#ece2cf", bodyColor:"#ece2cf", titleFont:FONT, bodyFont:FONT, padding:9,
             callbacks: {title: it => fmtX(it[0].parsed.x),
-              label: c => (c.dataset.label && c.dataset.label!=="départ" ? " "+c.dataset.label+": " : " ")
+              label: c => (c.dataset.label && c.dataset.label!=="start" ? " "+c.dataset.label+": " : " ")
                 + "$" + c.parsed.y.toFixed(2)}},
         },
       },
@@ -60,6 +60,6 @@ export function LineChart({series, base, height = 270, single = false, xfmt}){
   useEffect(() => () => { if(chart.current){ chart.current.destroy(); chart.current = null; } }, []);
 
   const enough = series.some(s => s.pts && s.pts.length >= 2);
-  if(!enough) return html`<div class="empty">Pas encore assez de points pour tracer la courbe.</div>`;
+  if(!enough) return html`<div class="empty">Not enough points yet to draw the curve.</div>`;
   return html`<div class="chart-box" style=${"height:" + height + "px"}><canvas ref=${ref}></canvas></div>`;
 }

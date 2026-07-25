@@ -3,7 +3,7 @@
 // verdict dot + paper P&L so the whole race reads at a glance.
 //
 // The race itself is no longer one flat chain: a grouping selector (Strat / Coin /
-// Durée) folds the runners into collapsible sub-groups along the chosen axis, each
+// Frame) folds the runners into collapsible sub-groups along the chosen axis, each
 // header carrying the group's aggregate P&L + count. Scales as the breadth grows.
 // Groups start COLLAPSED (a 48-runner rail is unusable open) — click a header to
 // expand it. The header of the group holding the current page is accented so you
@@ -13,10 +13,10 @@ import { CONFIG, useNow } from '../api.js';
 import { glyphOf, nameOf, partsOf, verdict, moneyS, signCls, ageStr } from '../format.js';
 
 const VDOT = {proven:"var(--verdigris)", none:"var(--vermilion)", trial:"var(--amber)", wait:"var(--ink-3)"};
-const VLABEL = {proven:"avantage prouvé", none:"pas d'avantage", trial:"à l'épreuve", wait:"en attente"};
+const VLABEL = {proven:"Proven edge", none:"No edge", trial:"On trial", wait:"Waiting"};
 
 // The three sub-nav axes — `key` indexes partsOf(), `lab` is the button caption.
-const AXES = [{key:"brain", lab:"Strat"}, {key:"token", lab:"Coin"}, {key:"frame", lab:"Durée"}];
+const AXES = [{key:"brain", lab:"Strat"}, {key:"token", lab:"Coin"}, {key:"frame", lab:"Frame"}];
 const FRAME_ORDER = {"5m":0, "15m":1};
 // group label: coins uppercased (BTC), frames as-is (15m), brains as-is (zlead).
 const groupLabel = (axis, v) => axis==="token" ? v.toUpperCase() : v;
@@ -30,13 +30,13 @@ const NAV = {by:"token", expanded:new Set()};
 function ConnStatus({conn}){
   const now = useNow(1000);
   if(!conn || (!conn.updatedAt && conn.loading))
-    return html`<div class="live"><span class="dot" style="background:var(--ink-3)"></span>connexion…</div>`;
+    return html`<div class="live"><span class="dot" style="background:var(--ink-3)"></span>connecting…</div>`;
   const ageS = conn.updatedAt ? (now - conn.updatedAt)/1000 : null;
   const reconnecting = !!conn.error;
   const stale = ageS != null && ageS > 25;
   const c = reconnecting ? "var(--vermilion)" : stale ? "var(--amber)" : "var(--verdigris)";
-  const txt = reconnecting ? "reconnexion…" : `en direct · maj ${ageStr(ageS)}`;
-  return html`<div class="live" title=${conn.error || "flux temps réel (auto 10 s)"}>
+  const txt = reconnecting ? "reconnecting…" : `live · upd ${ageStr(ageS)}`;
+  return html`<div class="live" title=${conn.error || "live feed (auto 10 s)"}>
     <span class="dot" style=${"background:"+c+(reconnecting?"":";box-shadow:0 0 8px "+c)}></span>${txt}</div>`;
 }
 
@@ -98,24 +98,24 @@ export function Sidebar({route, all, conn, pilot, mm, go}){
     <div class="brand">
       <span class="sigil" aria-hidden="true">🜍</span>
       <div><span class="wm"><b>poly</b>gurdjieff</span>
-        <span class="tag">le laboratoire</span></div>
+        <span class="tag">the lab</span></div>
     </div>
     <${ConnStatus} conn=${conn} />
 
-    <${Item} active=${route==="overview"} glyph="◈" label="Vue d'ensemble" onClick=${()=>go("overview")} />
-    <${Item} active=${route==="correlation"} glyph="▦" label="Corrélations" onClick=${()=>go("correlation")} />
-    <${Item} active=${route==="pilot"} real=${true} glyph="⚗" label="Le pilote ${plLive?"🔴":""}"
+    <${Item} active=${route==="overview"} glyph="◈" label="Overview" onClick=${()=>go("overview")} />
+    <${Item} active=${route==="correlation"} glyph="▦" label="Correlations" onClick=${()=>go("correlation")} />
+    <${Item} active=${route==="pilot"} real=${true} glyph="⚗" label="The pilot ${plLive?"🔴":""}"
       onClick=${()=>go("pilot")}
       right=${html`<span class=${"pnl "+signCls(plPnl)}>${moneyS(plPnl)}</span>`} />
     <${Item} active=${route==="mm"} real=${mmLive} glyph="⚒" label="Rewards-MM ${mmLive?"🔴":""}"
       onClick=${()=>go("mm")}
       right=${mmLive?html`<span class=${"pnl "+signCls(mmPnl)}>${moneyS(mmPnl)}</span>`:null} />
-    <${Item} active=${route==="events"} glyph="🗳" label="Évènements" onClick=${()=>go("events")} />
-    <${Item} active=${route==="copy"} glyph="🪞" label="Copie de wallets" onClick=${()=>go("copy")} />
-    <${Item} active=${route==="history"} glyph="🕰" label="Historique" onClick=${()=>go("history")} />
+    <${Item} active=${route==="events"} glyph="🗳" label="Events" onClick=${()=>go("events")} />
+    <${Item} active=${route==="copy"} glyph="🪞" label="Wallet copy" onClick=${()=>go("copy")} />
+    <${Item} active=${route==="history"} glyph="🕰" label="History" onClick=${()=>go("history")} />
 
-    <div class="nav-group">Stratégies — la course</div>
-    <div class="nav-tools" role="group" aria-label="Grouper les stratégies par">
+    <div class="nav-group">Strategies — the race</div>
+    <div class="nav-tools" role="group" aria-label="Group strategies by">
       ${AXES.map(a => html`<button class=${"nav-tool"+(by===a.key?" on":"")}
         onClick=${()=>setBy(a.key)} aria-pressed=${by===a.key}>${a.lab}</button>`)}
     </div>
@@ -134,7 +134,7 @@ export function Sidebar({route, all, conn, pilot, mm, go}){
         </div>`;
     })}
 
-    <${Item} active=${route==="about"} glyph="☉" label="La méthode" onClick=${()=>go("about")} />
-    <div class="nav-foot">argent fictif · stdlib + preact</div>
+    <${Item} active=${route==="about"} glyph="☉" label="The method" onClick=${()=>go("about")} />
+    <div class="nav-foot">paper money · stdlib + preact</div>
   </aside>`;
 }

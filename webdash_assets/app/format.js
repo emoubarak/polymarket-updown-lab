@@ -52,24 +52,24 @@ export function nameOf(n){
 
 // the entry slot in minutes-LEFT, from a preset's window fractions + the runner frame.
 // enter_lo = LATE bound (less remaining = later), enter_hi = EARLY bound. zlead 15m:
-// [0.27,0.45] -> "4–6,75 min restantes". null if no preset (e.g. archived/legacy strat).
+// [0.27,0.45] -> "4–6.75 min left". null if no preset (e.g. archived/legacy strat).
 export function entrySlot(preset, frame){
   if(!preset) return null;
   const w = frame === "5m" ? 5 : 15;
-  const f = x => (Math.round(x*100)/100).toLocaleString("fr-FR");
-  return `${f(preset.enter_lo*w)}–${f(preset.enter_hi*w)} min restantes`;
+  const f = x => (Math.round(x*100)/100).toLocaleString("en-GB");
+  return `${f(preset.enter_lo*w)}–${f(preset.enter_hi*w)} min left`;
 }
 // compact gate descriptor (band + lead floor + execution), for the strategy/pilot header
 export function gateSummary(preset){
   if(!preset) return null;
-  const bits = [`favori ${preset.min_fav}–${preset.max_fav}`];
+  const bits = [`favorite ${preset.min_fav}–${preset.max_fav}`];
   if(preset.min_lead_z) bits.push(`z≥${preset.min_lead_z}`);
   else if(preset.min_lead_bps) bits.push(`lead≥${preset.min_lead_bps} bps`);
-  if(preset.vol_cap) bits.push("filtre vol");
-  if(preset.btc_align) bits.push("veto BTC-align");
-  if(preset.ls_flow_cap) bits.push(preset.ls_flow_tilt ? "tilt flux-longshot" : "veto flux-longshot");
-  if(preset.maker_entry) bits.push("entrée maker");
-  if(preset.conviction_size) bits.push("mise par conviction");
+  if(preset.vol_cap) bits.push("vol filter");
+  if(preset.btc_align) bits.push("BTC-align veto");
+  if(preset.ls_flow_cap) bits.push(preset.ls_flow_tilt ? "longshot-flow tilt" : "longshot-flow veto");
+  if(preset.maker_entry) bits.push("maker entry");
+  if(preset.conviction_size) bits.push("conviction sizing");
   return bits.join(" · ");
 }
 
@@ -94,7 +94,7 @@ export const money  = x => (x<0?"-$":"$") + Math.abs(+x||0).toFixed(2);
 export const moneyS = x => ((+x||0)>=0?"+$":"-$") + Math.abs(+x||0).toFixed(2);
 export const pct    = (x,d=0) => (x*100).toFixed(d)+" %";
 export const signCls = x => x>0 ? "pos" : x<0 ? "neg" : "mut";
-export const fmt0 = x => Math.round(x).toLocaleString("fr-FR");
+export const fmt0 = x => Math.round(x).toLocaleString("en-GB");
 
 export function ageStr(sec){
   if(sec==null) return "—";
@@ -102,29 +102,29 @@ export function ageStr(sec){
   if(sec<3600) return Math.round(sec/60)+" min";
   return (sec/3600).toFixed(1)+" h";
 }
-export const timeOf = ts => ts ? new Date(ts*1000).toLocaleTimeString("fr-FR") : "—";
-export const dateOf = ts => ts ? new Date(ts*1000).toLocaleString("fr-FR",
+export const timeOf = ts => ts ? new Date(ts*1000).toLocaleTimeString("en-GB") : "—";
+export const dateOf = ts => ts ? new Date(ts*1000).toLocaleString("en-GB",
   {day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—";
 
-export const dirLabel = d => d==="Up" ? "Hausse" : d==="Down" ? "Baisse" : (d||"");
+export const dirLabel = d => d==="Up" ? "Up" : d==="Down" ? "Down" : (d||"");
 // Journal kinds: BUY[tag] (taker cross), REST_BUY[tag] (maker resting bid),
 // FILL_BUY[tag] (the resting bid got filled), CANCEL/EXPIRE[tag] (it didn't, then
-// a taker fallback BUY follows), SETTLE…WIN/LOSS. Plain-French so the maker flow
-// (poser → rempli OU retiré → traversée taker) reads without jargon.
+// a taker fallback BUY follows), SETTLE…WIN/LOSS. Plain English so the maker flow
+// (post → filled OR pulled → taker cross) reads without jargon.
 export function kindLabel(k){ k=k||"";
-  if(k.startsWith("REST_BUY")) return "Ordre maker posé";
-  if(k.startsWith("FILL_BUY"))  return "Maker rempli";
+  if(k.startsWith("REST_BUY")) return "Maker order posted";
+  if(k.startsWith("FILL_BUY"))  return "Maker filled";
   // scalp exits (liquidity-provision close): rest a sell at fill+target, fill on the
   // revert (maker, no fee), or bail across the book (taker) at end-of-window / no-revert.
-  if(k.startsWith("REST_SELL")) return "Sortie maker posée";
-  if(k.startsWith("FILL_SELL")) return "Sortie maker (revert)";
-  if(k.startsWith("SELL"))      return "Revente (taker)";
-  if(k.startsWith("CANCEL"))    return "Ordre retiré";
-  if(k.startsWith("EXPIRE"))    return "Ordre expiré";
-  if(k.startsWith("BUY+"))      return "Renfort (taker)";   // top-up toward target stake
-  if(k.startsWith("BUY"))       return "Pari placé (taker)";
-  if(k.endsWith("WIN")) return "Gagné";
-  if(k.endsWith("LOSS")) return "Perdu";
+  if(k.startsWith("REST_SELL")) return "Maker exit posted";
+  if(k.startsWith("FILL_SELL")) return "Maker exit (revert)";
+  if(k.startsWith("SELL"))      return "Sell back (taker)";
+  if(k.startsWith("CANCEL"))    return "Order pulled";
+  if(k.startsWith("EXPIRE"))    return "Order expired";
+  if(k.startsWith("BUY+"))      return "Top-up (taker)";   // top-up toward target stake
+  if(k.startsWith("BUY"))       return "Bet placed (taker)";
+  if(k.endsWith("WIN")) return "Won";
+  if(k.endsWith("LOSS")) return "Lost";
   return k;
 }
 
@@ -141,34 +141,34 @@ export const isWin = (k, pnl = 0) => isSettleKind(k) ? String(k).endsWith("WIN")
 
 // runner health from its last tick (telemetry freshness)
 export function health(tick){
-  if(!tick || tick.ts==null) return {c:"var(--ink-3)", t:"inconnu", age:null};
+  if(!tick || tick.ts==null) return {c:"var(--ink-3)", t:"unknown", age:null};
   const age = Date.now()/1000 - tick.ts;
-  if(age<75)  return {c:"var(--verdigris)", t:"actif", age};
-  if(age<900) return {c:"var(--amber)",     t:"lent",  age};
-  return {c:"var(--vermilion)", t:"muet", age};
+  if(age<75)  return {c:"var(--verdigris)", t:"live", age};
+  if(age<900) return {c:"var(--amber)",     t:"slow",  age};
+  return {c:"var(--vermilion)", t:"silent", age};
 }
 
 // THE tripwire verdict — does realized win-rate beat the price paid, on n>=150?
 export function verdict(m){
   const n = m ? (m.n_settled||0) : 0;
-  if(!n) return {key:"wait", txt:"en attente", help:"aucun pari encore placé"};
-  if(n<150) return {key:"trial", txt:`à l'épreuve ${n}/150`, help:"trop tôt — il faut ~150 paris"};
+  if(!n) return {key:"wait", txt:"Waiting", help:"no bet placed yet"};
+  if(n<150) return {key:"trial", txt:`On trial ${n}/150`, help:"too early — ~150 bets needed"};
   return m.win_rate>m.avg_price
-    ? {key:"proven", txt:"avantage prouvé", help:"gagne plus souvent que le prix payé"}
-    : {key:"none",   txt:"pas d'avantage", help:"gagne autant ou moins que le prix payé"};
+    ? {key:"proven", txt:"Proven edge", help:"wins more often than the price paid"}
+    : {key:"none",   txt:"No edge", help:"wins as often as or less than the price paid"};
 }
 // CSS class for the seal component
 export const sealCls = {wait:"wait", trial:"trial", proven:"proven", none:"none"};
 
 // real-money GO lamp — the tripwire with a Wilson lower bound
 export function goLamp(m){
-  if(!m || !m.n_settled) return {c:"var(--ink-3)", t:"feu argent réel — en attente de paris"};
+  if(!m || !m.n_settled) return {c:"var(--ink-3)", t:"real-money light — waiting for bets"};
   if(m.win_rate<=m.avg_price)
-    return {c:"var(--vermilion)", t:"FEU ROUGE — ne bat pas le prix payé (pas d'avantage)"};
+    return {c:"var(--vermilion)", t:"RED LIGHT — does not beat the price paid (no edge)"};
   if(m.n_settled<150 || m.win_lo<=m.avg_price)
-    return {c:"var(--amber)", t:`FEU ORANGE — prometteur, pas prouvé `
-      + `(${m.n_settled}/150 ; borne basse ${pct(m.win_lo)} vs prix ${pct(m.avg_price)})`};
-  return {c:"var(--verdigris)", t:"FEU VERT — avantage prouvé : l'IC du win-rate exclut le prix sur 150+ paris"};
+    return {c:"var(--amber)", t:`AMBER LIGHT — promising, not proven `
+      + `(${m.n_settled}/150; lower bound ${pct(m.win_lo)} vs price ${pct(m.avg_price)})`};
+  return {c:"var(--verdigris)", t:"GREEN LIGHT — proven edge: the win-rate CI excludes the price over 150+ bets"};
 }
 
 // per-(coin,frame) book-depth bet ceiling (measured in-band 0.85-0.95 capacity, mirrors

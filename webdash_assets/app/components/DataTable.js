@@ -26,7 +26,7 @@ export function DataTable({cols, rows, sort, onRowClick, empty}){
   const onSort = c => { if(!c.sortable) return;
     setS(p => (p && p.key === c.key) ? {key:c.key, dir:-p.dir} : {key:c.key, dir:-1}); };
 
-  if(!rows.length) return html`<div class="empty">${empty || "Aucune donnée."}</div>`;
+  if(!rows.length) return html`<div class="empty">${empty || "No data."}</div>`;
 
   // sortable headers are keyboard-operable (Tab to focus, Enter/Space to sort) and
   // announce direction via aria-sort, so the table isn't mouse-only.

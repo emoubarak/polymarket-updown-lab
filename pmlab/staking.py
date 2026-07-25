@@ -41,7 +41,7 @@ class AdaptiveStake:
     min_clip: float = 5.0           # exchange-floor-respecting minimum
     max_clip: float = 300.0         # measured 15m book depth at 2c — hard ceiling
     weighted: bool = True           # False = FLAT stake (= max_clip) every bet,
-                                    # no f-scaling/compounding ("pondération off")
+                                    # no f-scaling/compounding ("weighting off")
     dd_brake: float = 0.20          # halve f if bankroll < (1-dd_brake)*peak
     regime_window: int = 40         # pause new risk if rolling EV<0 over this many
     regime_pause: bool = True        # set False to DISABLE the rolling-EV pause.
