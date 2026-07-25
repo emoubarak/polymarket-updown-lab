@@ -97,7 +97,7 @@ export function Sidebar({route, all, conn, pilot, mm, go}){
   return html`<aside class="sidebar">
     <div class="brand">
       <span class="sigil" aria-hidden="true">🜍</span>
-      <div><span class="wm"><b>poly</b>gurdjieff</span>
+      <div><span class="wm"><b>poly</b>updown</span>
         <span class="tag">the lab</span></div>
     </div>
     <${ConnStatus} conn=${conn} />
