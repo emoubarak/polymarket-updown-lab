@@ -131,3 +131,7 @@ The Python real-money path (`run_live.py`) stays **disarmed without explicit env
 - `market-maker/docs/JOURNAL.md` — the Go MM's journal: incidents, owned mistakes, and the analysis showing delta-neutral MM on a binary market requires colocation (possible on Polymarket's colocation servers, but not permitted from France — hence never implemented here).
 - `docs/STRATEGY.md` — the zlead strategy in detail.
 - `docs/results/` — the final snapshot of all 109 paper runners.
+
+## License
+
+All rights reserved. The code, data and research are published for reference only; any reuse needs written permission. See [LICENSE](LICENSE).
