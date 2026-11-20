@@ -1,5 +1,5 @@
 ---
-name: results
+name: polymarket-results
 description: Status report of the strategies running on the VPS — PnL, trades, failure-mode diagnosis from the journals. Use when the user asks "where are we", "the results", "check the VPS".
 ---
 

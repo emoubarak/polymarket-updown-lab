@@ -1,5 +1,5 @@
 ---
-name: deploy
+name: polymarket-deploy
 description: Redeploys the zlead race to the VPS — code sync + RESTART of the runners (NEVER a reset). Reset/wipe of a state dir ONLY on explicit request. For a model change (sizing/fee), correct IN PLACE with backups, no reset. Use after modifying strategies bound for prod.
 ---
 
