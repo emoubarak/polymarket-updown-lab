@@ -1,5 +1,7 @@
 # Polymarket Up/Down Lab
 
+> **Archived on 2026-11-24.** No longer developed or run; repository read-only.
+
 **Case study: hunting — honestly — for a trading edge on Polymarket's crypto prediction markets.**
 
 I'm a software developer with **no background in finance**. This project started from a common-sense question: *are Polymarket's "Bitcoin Up or Down" markets (binary bets on 5- and 15-minute windows) actually efficient, or can a methodical developer find a measurable advantage there?*
