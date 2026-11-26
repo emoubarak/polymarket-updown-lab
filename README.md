@@ -6,9 +6,9 @@
 
 I'm a software developer with **no background in finance**. This project started from a common-sense question: *are Polymarket's "Bitcoin Up or Down" markets (binary bets on 5- and 15-minute windows) actually efficient, or can a methodical developer find a measurable advantage there?*
 
-The short answer, learned the hard way: **the market is remarkably efficient, and almost every "edge" you think you've found is a measurement artifact**. This repo documents the whole journey — the hypotheses, the backtests, the falsifications, the real dollars lost and won, and two complete engines built along the way (a Python paper-trading framework and a high-frequency market maker in Go).
+The short answer, learned the hard way: **the market is remarkably efficient, and almost every "edge" you think you've found is a measurement artifact**. This repo documents the whole journey — the hypotheses, the backtests, the falsifications, and two complete engines built along the way (a Python paper-trading framework and a high-frequency market maker in Go).
 
-> ⚠️ Nothing here is investment advice. The real-money path is disarmed by default; this project is published as an engineering case study.
+> ⚠️ Nothing here is investment advice. This project is published as an engineering case study, run in paper trading.
 
 ---
 
@@ -20,9 +20,8 @@ The short answer, learned the hard way: **the market is remarkably efficient, an
 | **2. Retroactive backtesting** | Backtest harness over Polymarket's free history + Binance | 💡 The "directional edge" was a **lookahead artifact**; real settlement is the Chainlink oracle, not Binance |
 | **3. Favorite-longshot premium** | Buy the extreme favorite (0.85–0.95) late in the window and hold to settlement | ⚠️ Real but thin; the naive version is falsified out-of-sample |
 | **4. The `zlead` family** | ONE parameterized engine: extreme favorite + a **volatility-normalized price-lead floor** (z ≥ 1) + measured vetoes (BTC alignment, longshot flow) | ✅ The only signal that survives multi-month AND multi-coin OOS — but net edge after fees ≈ 0 |
-| **5. Real money** | Small-stake real pilots on a two-host architecture: co-located execution in Dublin (~22 ms), display in Morocco | 📏 Autopsy of 55 real losses → one validated defensive veto; real execution costs measured on-chain |
-| **6. ML outlier hunt** | ~25 signal ideas, ML over every feature, strict OOS | ❌ **No public information beats the price.** Measured ceiling: +4.6 pts on one niche |
-| **7. Market making (rebates)** | On-chain reverse-engineering of a +$80k wallet → its edge is Polymarket's **liquidity rewards**, not the spread. Replica: Python MM, then an **ultra-low-latency Go rewrite** | ✅ The rebate is real and measured on-chain; strict delta-neutral MM on a binary market is **out of reach without colocation** — it becomes viable from Polymarket's colocation servers, but colocation is not permitted from France, so it couldn't be implemented (analysis in the journal) |
+| **5. ML outlier hunt** | ~25 signal ideas, ML over every feature, strict OOS | ❌ **No public information beats the price.** Measured ceiling: +4.6 pts on one niche |
+| **6. Market making (rebates)** | On-chain reverse-engineering of a +$80k wallet → its edge is Polymarket's **liquidity rewards**, not the spread. Replica: Python MM, then an **ultra-low-latency Go rewrite** | ✅ The rebate is real and measured on-chain; strict delta-neutral MM on a binary market is **out of reach without colocation** — it becomes viable from Polymarket's colocation servers, but colocation is not permitted from France, so it couldn't be implemented (analysis in the journal) |
 
 The methodological through-line: **every conclusion rests on a raw measurement** (on-chain transactions, fill journals, never-seen OOS data) — never on a derived API field or a flattering backtest. Whenever the data contradicted a strategy I liked, the strategy died.
 
@@ -30,9 +29,8 @@ The methodological through-line: **every conclusion rests on a raw measurement**
 
 ## The (honest) numbers
 
-- **~12,000 paper trades journaled** across 60 concurrent runners (7 variants × 6 coins × 2 window lengths), settled against the real Chainlink oracle.
+- **~12,000 paper trades journaled** across 75 concurrent runners, settled against the real Chainlink oracle.
 - Cumulative net result of the last run ($100 starting stake per runner): **+$55 on 15-minute windows** (36 runners), **−$520 on 5-minute windows** (39 runners) — the 5-minute granularity is a fee/spread trap.
-- Real money: a few dozen dollars of accepted losses (−$42, −$62), each autopsied down to root cause (execution bugs, not lack of capital) and turned into coded safety invariants (`pmlab/mm_guard.py`).
 - Polymarket's taker fee (`0.07·p·(1−p)`) was first believed to be phantom, then **proven charged on-chain** by reading raw transaction receipts — and the whole cost model recomputed in place, with backups.
 - The market-maker wallet I studied earns **~$1,700/day in liquidity rewards**; our replica banked its first rebate dollars, measured on-chain.
 
@@ -57,13 +55,13 @@ market-maker/           HFT market maker in Go (BTC 5-min): Φ(d2) pricing + EWM
 webdash.py              Dashboard: stdlib server + no-build Preact SPA (webdash_assets/)
 research/               ~40 backtest/falsification scripts + FINDINGS.md (the dated
                         research journal: every hypothesis, every verdict)
-docs/                   Strategy deep-dive, real-money setup, archived results (docs/results/)
+docs/                   Strategy deep-dive, archived results (docs/results/)
 deploy/                 Watchdogs, tunnels, GO/NO-GO gates for the VPS
 ```
 
 Engineering principles held end to end:
 
-- **One source of truth per decision**: the entry gate, sizing, coin registry and journal schema are each ONE module shared by paper, real, backtest and dashboard — drift between code paths cost two real losses before this rule became absolute.
+- **One source of truth per decision**: the entry gate, sizing, coin registry and journal schema are each ONE module shared by paper, real, backtest and dashboard — drift between code paths caused two wrong results before this rule became absolute.
 - **Non-bypassable execution realism**: book re-fetch with simulated latency before every fill, abandon if the price ran away, partial fills against real depth, adverse selection on resting orders.
 - **The front end derives from the back end**: the SPA reads `/config`; no hand-maintained duplicate lists.
 - **Guardrails born from real failures**: every threshold in the code answers a failure mode actually observed in the journals, documented in a comment.
@@ -116,9 +114,8 @@ python3 webdash.py --port 8420
 
 Python ≥ 3.10, **zero pip dependencies** for paper trading. Everything is read-only against public APIs (Binance, Polymarket Gamma/CLOB). Each runner writes its state to `state_<strat>_<coin>_<frame>/` (cash, fill journal, equity curve).
 
-The Go market maker: `cd market-maker && go build ./... && go test ./...` — see `market-maker/README.md` (real mode needs keys and a funded account; paper mode does not).
+The Go market maker: `cd market-maker && go build ./... && go test ./...` — see `market-maker/README.md`.
 
-The Python real-money path (`run_live.py`) stays **disarmed without explicit environment variables** — see `docs/SETUP-LIVE.md`.
 
 ## What this project demonstrates
 
