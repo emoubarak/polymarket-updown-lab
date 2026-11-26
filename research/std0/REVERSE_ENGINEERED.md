@@ -20,7 +20,7 @@ Crypto Up/Down ONLY, frames **5m + 15m ONLY**, 4 assets. In ~EVERY window of eac
 - **MINT ~49s BEFORE window open** (median −49s), block = **1000 sets median (1000–2500)**, self-submitted from its EOA (no relayer/quota). Pre-positioned ask ammunition.
 - **Two-sided tight maker quotes near 0.5**, small clips, refreshed fast (sub-second–few s), **fills front-loaded** (peak +30–90s into the 300s window, taper to ~0 by +270s = stops ~30s before settle).
 - **Sells only ~11% of the minted block** (gross), **buys back ~74% of what it sells** → it CHURNS for fills, net-offloads ~3% of the block. Holds ~89% as a matched block.
-- **Never merges; lets the block AUTO-REDEEM at settle** (redeem ≈ mint, net-zero round-trip). [Our Safe auto-redeems too.]
+- **Never merges; lets the block AUTO-REDEEM at settle** (redeem ≈ mint, net-zero round-trip).
 - **Stays ~delta-neutral**: median ending |imbalance|/mint = **2.0%** overall (btc ~5–6%, eth/xrp/sol ~1.5–2%).
 
 ## 3. How it enters Yes/No (size-weighted avg fill px, 10h)
@@ -73,16 +73,15 @@ TRADING is ~breakeven-to-slightly-positive (overround skim ~+$1/window on neutra
 is directional session-luck). **~75% of profit = the daily rebate.** The whole skill is: get filled a LOT near
 0.5 while NOT bleeding the spread/adverse-selection faster than the rebate pays.
 
-## 7. Implications for US (why our btc-5m run bled −$10.6 in ~20min)
-- The rebate is REAL and our Safe is eligible (§5 + a historical $0.03 MAKER_REBATE row).
-- BUT btc-5m is the HARDEST place to stay neutral + un-picked-off:
-  - std0 mints **1000 sets** ⇒ 5% imbalance = 50 shares = many clips of slack. We mint **80** ⇒ one 8-share
-    clip = 10% imbalance ⇒ we breach neutrality in ONE fill ⇒ directional bleed.
-  - std0 re-quotes **sub-second**; we poll **2s** ⇒ adverse selection on fast btc-5m.
-  - Result: −$10.6 marked bleed > the ~$1.1 rebate earned. The kill_loss=12 backstop fired correctly.
-- **The hinge is execution, exactly as the autopsy warned.** To replicate net-positive we must either:
-  1. Start on the CLEANER markets (eth/xrp/sol-5m or the 15m frame) where adverse selection is gentler and
+## 7. Implications for replication
+- The rebate is REAL and open to any maker (§5): no registration, a maker fill is enough.
+- BUT btc-5m is the HARDEST place to stay neutral and un-picked-off:
+  - std0 mints **1000 sets** ⇒ 5% imbalance = 50 shares = many clips of slack. A block of 80 sets would make
+    one 8-share clip = 10% imbalance ⇒ neutrality is breached in ONE fill ⇒ directional exposure.
+  - std0 re-quotes **sub-second**; a 2s poll would face adverse selection on fast btc-5m.
+- **The hinge is execution.** Net-positive replication would require either:
+  1. Starting on the CLEANER markets (eth/xrp/sol-5m or the 15m frame) where adverse selection is gentler and
      the per-window trading is genuinely ~neutral (both outcomes +), accepting a smaller rebate pool; and/or
-  2. Scale the block (finer neutrality) + speed the re-quote (sub-second, co-located) + spot-anchor to cut
-     pickoff — i.e. actually match std0's machine before touching btc-5m at size.
-- **Do NOT re-run the naive btc-5m/mint-80/clip-8/poll-2s config — it is a measured money-loser for us.**
+  2. Scaling the block (finer neutrality) + speeding the re-quote (sub-second) + spot-anchoring to cut
+     pickoff — i.e. actually matching std0's machine before touching btc-5m at size.
+  Colocation would be the next step for latency, but it is not permitted from France.

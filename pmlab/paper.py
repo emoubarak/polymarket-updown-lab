@@ -57,10 +57,9 @@ def walk_book(levels: list[tuple[float, float]], usd: float | None = None,
     book-traversal slippage. `impact_k` adds the missing piece, MARKET IMPACT AT
     SIZE: a surcharge on the average proportional to the fraction of shown depth
     you consume (your own footprint + phantom/cancelled liquidity). It is 0 by
-    default — and 0 is CORRECT at the live $25 clip, where real fills match the
-    zero-impact model because the book is ~10× the clip. It only bites when the
-    stake approaches book depth, which is exactly where the engine would
-    otherwise lie. Calibrate impact_k against real fills once run_live is armed."""
+    default, which is adequate for a small clip such as $25 (the book is ~10× the
+    clip). It only bites when the stake approaches book depth, which is exactly
+    where the engine would otherwise lie."""
     filled, cost = 0.0, 0.0
     shown = sum(s for _, s in levels) or 1.0
     for price, size in levels:

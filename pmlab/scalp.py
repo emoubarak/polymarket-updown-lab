@@ -13,12 +13,12 @@ get PAID to provide liquidity to the impatient seller and close on the recovery.
   Rest a passive bid ENTER below the mid's EWMA ref (both sides — a Down-dip is an
   Up-pop). When an impatient seller trades THROUGH it (paper.match_orders: 0.7 of
   size, no maker fee — the SAME anti-selection model that exposed the directional
-  maker at −0.015 live), you are long the dip. Rest a passive sell TARGET above the
+  maker), you are long the dip. Rest a passive sell TARGET above the
   fill to capture the revert (no fee). If it has not reverted within MAX_HOLD or the
   window is about to close, BAIL as taker — never carry a random mid-window position
   to settlement.
 
-WHY THIS IS NOT THE KILLED DIRECTIONAL MAKER (memory: maker-entry-lead, −0.015 live):
+WHY THIS IS NOT THE KILLED DIRECTIONAL MAKER (memory: maker-entry-lead):
 that maker rested a bid to BUY-AND-HOLD the favorite to settlement, so its fills were
 adverse (filled exactly when the favorite weakened toward a loss). This brain EXITS
 in seconds on the revert — the settlement-weakening anti-selection does not apply; the
@@ -27,8 +27,8 @@ only question is whether the +6.5c revert survives the 0.7 passive fill + the sp
 HONEST RISK / why this is a FORWARD-TEST, not a proven edge: the +6.5c reversion is
 REAL and fill-independent, but the CAPTURE is not — it needs maker fills on a thin
 book at an ~8s poll (fast dips that revert within one tick are missed). The tape
-backtest of any maker is OPTIMISTIC about fills (proven by the directional maker:
-tape +0.05 → live −0.015). So ONLY the live paper run, filling against the real
+backtest of any maker is OPTIMISTIC about fills (as the directional maker
+showed: the tape flattered its fills). So ONLY the forward paper run, filling against the real
 exec_book, can say if the revert is capturable. Tripwire: if realized round-trips
 net ≤ 0 over ~150 closes, the signal does not survive execution — kill it.
 

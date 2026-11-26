@@ -2,7 +2,7 @@
 
 This file once held a three-forces ("Law of Three") gate for the gurdjieff brain. That
 brain — and the whole esoteric family — was falsified and retired (research/FINDINGS.md):
-the live edge is in the favorite PRICE (the longshot-favorite premium), NOT in a model of
+the edge is in the favorite PRICE (the longshot-favorite premium), NOT in a model of
 BTC direction. All that survives is `model_p_up`, which the runner uses only to populate
 `ctx.p_up` (telemetry / a reference probability) — the zlead family ignores it for the
 decision. Kept here (not deleted) because the runner and research/analyze.py both read it.

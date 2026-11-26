@@ -29,7 +29,7 @@ from pathlib import Path
 
 ENTRY = ("BUY", "BUY+", "FILL_BUY")
 CLOSE = ("SETTLE_WIN", "SETTLE_LOSS")
-NON_CRYPTO = ("state_events", "state_copy", "live_state")
+NON_CRYPTO = ("state_events", "state_copy")
 
 
 def base(k: str) -> str:

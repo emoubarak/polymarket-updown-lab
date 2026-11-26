@@ -17,8 +17,8 @@ rewardsMaxSpread=4.5¢):
 
 On-chain mint/redeem via the builder relayer (node ~/mint/setops.js). CLOB bids/asks/cancels via
 live.LiveBroker (place_limit/place_sell/cancel/order_fill). Honest cash-flow accounting:
-spent (mint + bid fills) vs received (ask fills + redeems); P&L reconciled to wallet value. The
-rewards land as separate MAKER_REBATE rows in the data-api feed (not modelled here — measured live).
+spent (mint + bid fills) vs received (ask fills + redeems); P&L reconciled on-chain. The
+rewards land as separate MAKER_REBATE rows in the data-api feed (not modelled here).
 """
 from __future__ import annotations
 
@@ -33,9 +33,8 @@ from pathlib import Path
 from . import feeds
 from .feeds import INTERVALS
 
-# On-chain set ops backend. Default = the relayer (setops.js); override MINT_JS=~/mint/safeops.js to
-# self-submit from a Gnosis Safe (zero relayer / zero quota) — same `<cmd> <cid> <usd>` CLI + "OK" on
-# success, so it's a drop-in (see research/std0/safeops.js, the std0 Safe unblock 2026-06-29).
+# On-chain set ops backend. Default = the relayer helper (setops.js); override with MINT_JS to point
+# at another helper — it must keep the same `<cmd> <cid> <usd>` CLI + "OK" on success.
 SETOPS_JS = os.path.expanduser(os.environ.get("MINT_JS", "~/mint/setops.js"))
 
 
@@ -71,8 +70,8 @@ class RewardMM:
         # maker-rebate mode where bids only replenish sold inventory (one side often empty → Qmin=0).
         self.uptime_bids = getattr(args, "uptime_bids", False)
         self._last_mu = self._last_md = 0.5    # last seen Up/Down mids — value held inventory at auto-redeem
-        self._pusd = 0.0                       # last-read on-chain Safe pUSD (mint gate + P&L anchor)
-        self.baseline_pusd = None              # pUSD at first sync — the P&L zero (real money, not cash-flow)
+        self._pusd = 0.0                       # last-read on-chain pUSD (mint gate + P&L anchor)
+        self.baseline_pusd = None              # pUSD at first sync — the P&L zero (on-chain, not cash-flow)
         self.sym = feeds.SYMBOL.get(args.underlying, "BTCUSDT")
         self.open_px = None                    # cached window-open spot (set in _roll)
         self.sigma = 0.0                       # cached EWMA vol/min (set in _roll)
@@ -150,11 +149,11 @@ class RewardMM:
     # ----------------------------------------------------------- on-chain truth ---
     def _sync_onchain(self) -> None:
         """The ON-CHAIN balance is the truth — auto-redeem at settle, GTD orders that fill AFTER the
-        process is killed, and restarts all make the in-memory cash-flow model DRIFT (observed: thought
-        0/10, really held 110/100 → tried to double-mint → 'balance 0'). Read the Safe's actual pUSD +
+        process is killed, and restarts all make the in-memory cash-flow model DRIFT (e.g. a stale model
+        could try to double-mint → 'balance 0'). Read the actual on-chain pUSD +
         held tokens for the CURRENT window and overwrite the tracked inventory. Called every roll so
-        desync can NEVER accumulate. Also re-anchors the P&L zero to real pUSD (not the drifting
-        received−spent). DRY-RUN: no-op (no real balances)."""
+        desync can NEVER accumulate. Also re-anchors the P&L zero to on-chain pUSD (not the drifting
+        received−spent). DRY-RUN: no-op (no on-chain balances)."""
         if getattr(self.broker, "dry_run", True) or not self.tok_up:
             return
         try:
@@ -167,10 +166,10 @@ class RewardMM:
                 self.log(f"sync: unparseable balOut {out[:80]!r}"); return
             self._pusd = float(pu.group(1))
             self.inv_up, self.inv_dn = float(ud.group(1)), float(ud.group(2))
-            self.minted = min(self.inv_up, self.inv_dn)          # gates reflect REAL holdings
+            self.minted = min(self.inv_up, self.inv_dn)          # gates reflect ON-CHAIN holdings
             # NB: do NOT re-anchor realized to live pUSD here — at a roll the just-settled block's
             # auto-redeem LAGS (seconds–minutes), so pUSD momentarily reads low (mint spent, redeem
-            # pending) → a phantom −$100 realized → false KILL. The running P&L uses the lag-free
+            # pending) → a phantom large negative realized → false KILL. The running P&L uses the lag-free
             # auto-redeem ESTIMATE (see _roll); _pusd is only for the mint gate + telemetry.
             self.log(f"⟲ sync: pUSD={self._pusd:.2f} inv={self.inv_up:.0f}/{self.inv_dn:.0f}")
         except Exception as e:
@@ -218,7 +217,7 @@ class RewardMM:
             self._persist(); return                 # block at settle (no merge needed — see _roll credit)
         if not (self.min_quote <= mu[2] <= self.max_quote):
             self._cancel_all(); self._persist(); return
-        # 1. mint ask ammunition once — ONLY if live pUSD covers it (a stale model once tried to mint a
+        # 1. mint ask ammunition once — ONLY if live pUSD covers it (a stale model could try to mint a
         #    second block while the first was still held → 'balance 0'; the live check makes that impossible).
         if self.minted < 1 and self.mint_usd >= 1 and self._pusd_now() >= self.mint_usd \
                 and self._setop("mint", self.mint_usd):

@@ -56,7 +56,7 @@ export function Correlation(){
           a single risk factor. And what ruins an asymmetric-payoff book (favorite: +0.11 won /
           −1.00 lost) is <b>losses that cluster</b>: a burst of flips in the same window.
           So we measure, live, how much the runners <b>lose together</b> — the prerequisite for an
-          "ETF" that would arm the top X without stacking bets that crater at the same time. The φ of realized
+          "ETF" that would combine the top X without stacking bets that crater at the same time. The φ of realized
           losses fills in slowly (favorites ~90%); the <b>Structural</b> tab gives the answer
           <i>right away</i> via the spot co-movement of the underlyings.</p></div>
     </div>

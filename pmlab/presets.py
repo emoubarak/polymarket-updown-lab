@@ -1,6 +1,6 @@
 """Strategy presets — ONE base strategy (zlead) + composable TYPE modifiers.
 
-The whole live family is `zlead`: buy the extreme favorite with a vol-normalized
+The whole active family is `zlead`: buy the extreme favorite with a vol-normalized
 lead floor, hold to settle. Everything else is a CUSTOMIZATION of zlead, expressed
 as fields — never a separate hand-written strategy:
 
@@ -12,16 +12,16 @@ as fields — never a separate hand-written strategy:
 A deployed brain = zlead + a (possibly empty, possibly composed) set of types, plus
 any per-deployment field overrides (e.g. a per-coin entry slot). So `zleadn` is just
 `zlead` of type `n`; `zleadmk` is `zlead` type `mk`; they COMPOSE (`zleadnmk`). Add a
-new dimension = add one TYPES entry (or a new field). Paper (engine.Engine), the real
-pilot (run_live) and the dashboard (/config) all read the SAME generated Preset, so a
+new dimension = add one TYPES entry (or a new field). Paper (engine.Engine) and the
+dashboard (/config) both read the SAME generated Preset, so a
 brain decides identically everywhere and enter_lo lives in ONE place.
 
 THE WIDENING (2026-06-25): the base entry slot is enter_lo 0.27 / enter_hi 0.45 (entry
 4-6.75 min left). The marginal-cohort backtest (objective = cumulative $/day, not
 per-trade EV) showed profit/day keeps rising as the slot extends down to ~4 min left,
-then the 2-3 / 1-2 min cohorts turn EV-negative and real slippage worsens; widening UP
+then the 2-3 / 1-2 min cohorts turn EV-negative and fill slippage worsens; widening UP
 (earlier) is strictly worse. Per-coin: eth/doge confirm 0.27, bnb wants ~0.33 (set it
-with a field override), sol/xrp thin → judge live.
+with a field override), sol/xrp thin → judge in the forward-test.
 """
 from __future__ import annotations
 
@@ -33,9 +33,8 @@ from .entry import EntryGate
 
 ENTER_HI = 0.40     # early bound — TIGHTENED 0.45->0.40 (2026-06-26). The early cohort
 #                     (6-6.75 min left in 15m, frac 0.40-0.45) is dead-to-negative on
-#                     THREE independent datasets: backtest BTC OOS (n=14k), paper live, and
-#                     REAL money (btc-15m n=197: 6-7min cohort EV/$ -0.009 vs 5-6min +0.083).
-#                     A faithful prod-rule slot sim (enter_lo=0.27 fixed) peaks at enter_hi=0.40
+#                     TWO independent datasets: backtest BTC OOS (n=14k) and the paper runs.
+#                     A faithful slot sim of the rule (enter_lo=0.27 fixed) peaks at enter_hi=0.40
 #                     on BOTH OOS EV/$ (+0.0092->+0.0154) and cumulative $/day (+90.8->+137.4);
 #                     0.38/0.36 lose volume without lifting edge. Widening UP stays strictly worse.
 WIDE_LO = 0.27      # late bound — the slippage-robust profit-max slot (was 0.35 / ~6min)
@@ -43,10 +42,10 @@ WIDE_LO = 0.27      # late bound — the slippage-robust profit-max slot (was 0.
 # COIN_BET_MAX (measured favourite book depth @+2c = per-bet ceiling) and COIN_SLOTS
 # (per-coin entry_lo override, bnb 0.33) now live in the single coin registry
 # (pmlab/coins.py) and are re-exported above, so `presets.COIN_BET_MAX` etc. keep
-# working for every importer. Each paper/pilot bet is min(WEIGHT_PCT × capital,
+# working for every importer. Each paper bet is min(WEIGHT_PCT × capital,
 # COIN_BET_MAX[coin]) (staking.weighted_clip) — never more than the book holds. Add a coin
 # = one Coin(...) line in coins.py.
-WEIGHT_PCT = 0.10          # fraction of capital staked per bet (same as the real pilot)
+WEIGHT_PCT = 0.10          # fraction of capital staked per bet (shared sizing model)
 START_CAPITAL = 100.0      # paper + backtest starting bankroll (rebased 2026-06-26)
 
 
@@ -72,15 +71,15 @@ class Preset:
     # --- execution / sizing ---
     maker_entry: bool = False       # rest a passive bid (no fee), cross taker late if unfilled
     maker_fb_frac: float = 0.15     # cross taker once < this much of the window remains
-    maker_recenter: bool = False    # COLO experiment: re-post the resting bid at the live favorite
+    maker_recenter: bool = False    # re-post the resting bid at the live favorite
     #                                 mid on drift (a stale bid fills only on a weakening favorite =
     #                                 adverse selection); only meaningful with maker_entry
     conviction_size: bool = False   # scale stake by extremity × excess-lead-z
     # --- deployment ---
-    live: bool = False              # armable as a REAL pilot (webdash pilot dropdown reads this)
+    live: bool = False              # flagship flag (badge in the dashboard lineup)
 
     def gate(self) -> EntryGate:
-        """The shared EntryGate — the one object both paper (Engine) and real build."""
+        """The EntryGate built from this preset (the one decision object the paper Engine uses)."""
         return EntryGate(min_fav=self.min_fav, max_fav=self.max_fav, vol_cap=self.vol_cap,
                          min_lead_bps=self.min_lead_bps, min_lead_z=self.min_lead_z,
                          btc_align=self.btc_align, ls_flow_cap=self.ls_flow_cap,
@@ -127,8 +126,8 @@ TYPES: dict[str, Type] = {
                {"min_lead_z": 1.5}),
     "mk": Type("maker entry: passive fee-free bid, late taker cross if unfilled",
                {"maker_entry": True}),
-    "a":  Type("BTC-align veto (alts) — NOW THE BASE zlead DEFAULT (real-money loss autopsy "
-               "2026-06-28: opposed 20% losses vs aligned 7%); type kept as an explicit alias",
+    "a":  Type("BTC-align veto (alts) — NOW THE BASE zlead DEFAULT "
+               "(held out-of-sample on the 90d backtest); type kept as an explicit alias",
                {"btc_align": True}),
     "f":  Type("longshot-flow veto (alts): skip if pre-entry longshot accumulation / depth "
                "≥ 2.5 (informed fade → favorite more at risk; calibrated 5m+15m, ADDITIVE to type a, no-op on btc)",
@@ -151,12 +150,11 @@ def zlead(*types: str, live: bool = False, **overrides) -> Preset:
       zlead('n','mk')     -> narrow maker                        key 'zleadnmk'
       zlead(enter_lo=.33) -> custom entry slot (e.g. bnb)        key 'zlead'
     """
-    # GUARDRAIL (2026-06-28, from the real-money loss autopsy research/loss_enrich.py): the
-    # BTC-align veto is now the BASE default for every zlead variant. On an ALT, a favorite the
-    # book likes while BTC's move OPPOSES it lost 20% of the time on real money (n=30) vs 7% when
-    # BTC aligned — and it held OOS on the 90d deep backtest. It's a no-op on BTC itself (runner
+    # GUARDRAIL (2026-06-28): the BTC-align veto is now the BASE default for every zlead
+    # variant. On an ALT, a favorite the book likes while BTC's move OPPOSES it is a weaker
+    # entry — the veto held OOS on the 90d deep backtest. It's a no-op on BTC itself (runner
     # passes btc_lead=None when not an alt), rare (~6% of alt entries), and cuts a −EV tail, so it
-    # protects the alt pilots (esp. plain zlead-eth-15m) without touching BTC or the core edge.
+    # protects the alt runners (esp. plain zlead-eth-15m) without touching BTC or the core edge.
     # The 'a' type (and 'p') still set it explicitly — now redundant with the base, kept as aliases.
     fields: dict = {"btc_align": True}
     tags: list[str] = []
@@ -174,8 +172,8 @@ def zlead(*types: str, live: bool = False, **overrides) -> Preset:
 
 
 # ===================================================================== ACTIVE ===
-# The live family — ALL generated from the base zlead + types. Add a variant = one
-# zlead(...) call. The two armable survivors carry live=True.
+# The active family — ALL generated from the base zlead + types. Add a variant = one
+# zlead(...) call. The flagship variants carry live=True (badge only).
 _ACTIVE = [
     zlead(live=True),          # flagship — zlead for every coin
     zlead("mk", live=True),    # maker twin (same gate, execution-only forward-test)
@@ -184,12 +182,12 @@ _ACTIVE = [
     zlead("a"),                # BTC-align veto (alts) — paper forward-test (90d-OOS lead)
     zlead("f"),                # longshot-flow fade veto (alts) — paper forward-test (90d-OOS, additive)
     zlead("a", "f"),           # COMBO a+f veto — the cleanest alt subset (90d: 4.2% loss / +9.0 edge)
-    zlead("p", live=True),     # FLAGSHIP — veto BTC-align + flow-TILT sizing; the measured-best, ARMABLE
+    zlead("p", live=True),     # FLAGSHIP — veto BTC-align + flow-TILT sizing; the measured-best
 ]
 
 # ==================================================================== ARCHIVE ===
 # Falsified non-zlead ancestors (research/FINDINGS.md). Kept constructible so research/
-# backtests can re-run them; NOT deployed, NOT armable, NOT in the dashboard lineup.
+# backtests can re-run them; NOT deployed, NOT in the dashboard lineup.
 # HISTORICAL NOTE: these falsified strategies carried alchemical code names
 # (favorite, favorite_vol, favorite_lead, favorite_vollead, favorite_cheap, favorite_conviction…) — renamed to plain names for
 # publication; the mapping is documented in research/FINDINGS.md.
@@ -220,16 +218,15 @@ PRESETS: dict[str, Preset] = {p.key: p for p in _ACTIVE}
 ARCHIVE: dict[str, Preset] = {p.key: p for p in _ARCHIVE}
 ALL_PRESETS: dict[str, Preset] = {**PRESETS, **ARCHIVE}
 
-# Armable as REAL pilots = every ACTIVE zlead variant (the dashboard pilot dropdown
-# reads this). ARCHIVE (dead non-zlead brains) stays excluded. The `live` field marks
-# the audited flagships (zlead/zleadmk) for a badge, but all four can be armed/customized.
+# Every ACTIVE zlead variant (the dashboard lineup reads this). ARCHIVE (dead non-zlead
+# brains) stays excluded. The `live` field marks the flagships (zlead/zleadmk) for a badge.
 LIVE_STRATEGIES: list[str] = list(PRESETS)
 
 
-# ---------------------------------------------- CLI resolution (paper + real) ---
-# Both main.py (paper) and run_live.py (real) build their preset through THESE, so the
-# customization interface (compose types, override fields per deployment) is identical
-# on both paths — no drift, the [[always-modularize]] rule.
+# ---------------------------------------------- CLI resolution (shared) ---
+# Every runner builds its preset through THESE, so the customization interface
+# (compose types, override fields per deployment) is identical everywhere — no drift,
+# the [[always-modularize]] rule.
 def add_preset_args(p) -> None:
     """Add the zlead customization flags to an argparse parser."""
     p.add_argument("--type", default="", metavar="TAGS",
@@ -241,7 +238,7 @@ def add_preset_args(p) -> None:
     p.add_argument("--min-lead-z", type=float, default=None, help="vol-normalized lead floor (x = 1.5)")
     p.add_argument("--maker", action="store_true", help="maker entry (mk)")
     p.add_argument("--recenter", action="store_true",
-                   help="maker re-centering (colo): re-post the resting bid at the live favorite mid on drift")
+                   help="maker re-centering: re-post the resting bid at the live favorite mid on drift")
 
 
 def preset_from_args(strategy: str, a) -> Preset:
@@ -256,7 +253,7 @@ def preset_from_args(strategy: str, a) -> Preset:
             ov[fld] = v
     if getattr(a, "maker", False):
         ov["maker_entry"] = True
-    if getattr(a, "recenter", False):           # colo: re-centering implies a maker bid to track
+    if getattr(a, "recenter", False):           # re-centering implies a maker bid to track
         ov["maker_entry"] = True
         ov["maker_recenter"] = True
     # per-coin entry-slot default (COIN_SLOTS), unless --enter-lo was given explicitly

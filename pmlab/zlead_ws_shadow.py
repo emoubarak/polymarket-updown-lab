@@ -7,7 +7,7 @@ thing that differs WS vs REST is `spot` (a live Binance bookTicker WS vs a REST 
 identical) + the favorite + the books. The outcome (did the favorite win) is resolved OFFLINE at
 check-time via the oracle, so this long-running process is pure logging = robust for days.
 
-Run on a box with websocket-client (AWS .venv-live):  python3 -m pmlab.zlead_ws_shadow
+Run on a box with websocket-client (.venv-live):  python3 -m pmlab.zlead_ws_shadow
 """
 from __future__ import annotations
 

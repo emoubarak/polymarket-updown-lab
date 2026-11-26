@@ -1,18 +1,16 @@
 """MM safety harness — runtime invariants + pre-flight self-checks.
 
-Every check here maps to a REAL incident that cost real money or hours of confusion (2026-07-01 session,
-−$62). The rule the session taught: NEVER validate in production. These invariants HALT the bot on a
-violation instead of bleeding silently, and the pre-flight refuses to arm on a misconfig. Stdlib only
-(paper convention). See research/std0/MM_WORKFLOW.md for how this fits the workflow.
+Every check here guards a specific failure mode of a market-making loop. These invariants HALT the bot
+on a violation instead of bleeding silently, and the pre-flight refuses to arm on a misconfig. Stdlib only
+(paper convention).
 
-Incident → check:
-  * UserFeed counted the TAKER's size (114) for our 5-share order  → check_fill: a fill can't exceed our clip.
-  * inventory tracking desynced from on-chain (that misparse)      → reconcile_inv: engine vs chain, HALT.
+Failure mode → check:
+  * a fill feed that reports the TAKER's size instead of ours      → check_fill: a fill can't exceed our clip.
+  * inventory tracking desynced from on-chain (e.g. that misparse) → reconcile_inv: engine vs chain, HALT.
   * settle-lag phantom mark (−$block) → false kills                → check_mark: mark can't be < −block.
-  * cap/flatten dumped at floor 0.02 (−$26)                        → check_sell_price: never sell ≫ below mid.
-  * mint_usd > pUSD aborted SILENTLY → no quotes ("no orders")     → preflight: mint ≤ pUSD (+ no silent aborts).
+  * cap/flatten dumping at the 0.02 floor                          → check_sell_price: never sell ≫ below mid.
+  * mint_usd > pUSD aborting SILENTLY → no quotes ("no orders")    → preflight: mint ≤ pUSD (+ no silent aborts).
   * clip 3 < CLOB min 5 → every order rejected                     → preflight: clip ≥ CLOB_MIN.
-  * beta 0.7 crossed the tight book → 0 fills                      → the DRY-vs-live gate (mm_dry_gate.py), not here.
 """
 from __future__ import annotations
 
@@ -48,8 +46,8 @@ class Guard:
                 self.log(f"on_halt err: {e}")
 
     def check_fill(self, fill_size, clip):
-        """A single fill can NEVER exceed our resting order size (clip). A 114-share 'fill' on a 5-share
-        order is impossible → it's a parse bug (we're reading the taker's size). Small tolerance for float."""
+        """A single fill can NEVER exceed our resting order size (clip). A fill far larger than a
+        5-share order is impossible → it's a parse bug (we're reading the taker's size). Small tolerance for float."""
         if fill_size > clip * 1.05 + 0.01:
             self._halt(f"fill {fill_size} > clip {clip} — impossible, fill-parse bug (reading taker size?)")
             return False
@@ -57,9 +55,9 @@ class Guard:
 
     def reconcile_inv(self, eng_up, eng_dn, chain_up, chain_dn, tol=None, max_streak=3):
         """Engine-tracked inventory (from fills) vs on-chain truth (baltoks). A ONE-OFF divergence is a
-        timing gap (a fill/redeem in flight) that _sync_onchain corrects anyway — do NOT kill on it (that
-        false-halt left the bot inert → no bets). Only HALT on a PERSISTENT desync (max_streak consecutive
-        failures) = the tracker is truly lying (the −60% misparse). Call AFTER reading chain, BEFORE overwrite."""
+        timing gap (a fill/redeem in flight) that _sync_onchain corrects anyway — do NOT kill on it (a false halt
+        would leave the bot inert → no bets). Only HALT on a PERSISTENT desync (max_streak consecutive
+        failures) = the tracker is truly lying. Call AFTER reading chain, BEFORE overwrite."""
         blk = max(chain_up, chain_dn, eng_up, eng_dn, 1)
         if tol is None:
             tol = max(3.0, 0.15 * blk)
@@ -85,8 +83,8 @@ class Guard:
         return True
 
     def check_sell_price(self, price, mid):
-        """Never place a sell (resting ask or flatten) more than MAX_SELL_BELOW_MID under the mid — the
-        0.02 dump that cost −$26. Returns a safe price (clamped) so the caller never dumps."""
+        """Never place a sell (resting ask or flatten) more than MAX_SELL_BELOW_MID under the mid — a
+        dump at the 0.02 floor. Returns a safe price (clamped) so the caller never dumps."""
         if mid is None:
             return price
         floor = mid - MAX_SELL_BELOW_MID
@@ -97,8 +95,8 @@ class Guard:
 
 
 def preflight(cfg, pusd, armed, log=print):
-    """Startup self-checks. Returns (ok, failures). The runner REFUSES to arm real money if any fail —
-    a misconfig must never reach the live wallet again. cfg = the argparse namespace; pusd = live balance."""
+    """Startup self-checks. Returns (ok, failures). The runner REFUSES to arm if any fail —
+    a misconfig must never reach the live broker. cfg = the argparse namespace; pusd = live balance."""
     f = []
     clip = getattr(cfg, "clip", 0)
     mint = getattr(cfg, "mint_usd", 0)

@@ -59,7 +59,7 @@ export function entrySlot(preset, frame){
   const f = x => (Math.round(x*100)/100).toLocaleString("en-GB");
   return `${f(preset.enter_lo*w)}–${f(preset.enter_hi*w)} min left`;
 }
-// compact gate descriptor (band + lead floor + execution), for the strategy/pilot header
+// compact gate descriptor (band + lead floor + execution), for the strategy header
 export function gateSummary(preset){
   if(!preset) return null;
   const bits = [`favorite ${preset.min_fav}–${preset.max_fav}`];
@@ -160,9 +160,9 @@ export function verdict(m){
 // CSS class for the seal component
 export const sealCls = {wait:"wait", trial:"trial", proven:"proven", none:"none"};
 
-// real-money GO lamp — the tripwire with a Wilson lower bound
+// edge-confirmation lamp — the tripwire with a Wilson lower bound
 export function goLamp(m){
-  if(!m || !m.n_settled) return {c:"var(--ink-3)", t:"real-money light — waiting for bets"};
+  if(!m || !m.n_settled) return {c:"var(--ink-3)", t:"edge light — waiting for bets"};
   if(m.win_rate<=m.avg_price)
     return {c:"var(--vermilion)", t:"RED LIGHT — does not beat the price paid (no edge)"};
   if(m.n_settled<150 || m.win_lo<=m.avg_price)

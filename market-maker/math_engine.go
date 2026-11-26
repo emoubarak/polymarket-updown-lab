@@ -51,7 +51,7 @@ func Phi(x float64) float64 {
 // back. sigma must already be per-sqrt-second (not annualized); T in seconds.
 //
 // At T <= 0 the payoff is a step function; resolution uses >= per the market
-// rules (confirm per-market wording before live trading — see risk config).
+// rules (confirm per-market wording).
 // Returns (fair probability, d2).
 func FairValue(S, K, sigma, T float64) (float64, float64) {
 	if S <= 0 || K <= 0 || sigma <= 0 {

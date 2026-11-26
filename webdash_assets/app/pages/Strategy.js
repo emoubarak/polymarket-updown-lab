@@ -109,11 +109,10 @@ export function Strategy({name}){
     <${Lamp} lamp=${lamp} />
     <div style="height:18px"></div>
 
-    <${Note}>Three regimes, not to be confused: <b style="color:#a3bac9">📊 Backtest</b> = replay
+    <${Note}>Two regimes, not to be confused: <b style="color:#a3bac9">📊 Backtest</b> = replay
       on <b>past data</b> (history, what would have happened) · <b class="gold">🟡 Live
       (paper)</b> = the bot trades <b>right now</b> on the real markets, with <b>paper money</b>
-      (the "real" test currently running) · <b style="color:var(--vermilion)">🔴 Pilot</b> = <b>real
-      money</b> (Pilot tab). This page = backtest + live paper.</${Note}>
+      (the forward test currently running). This page = backtest + live paper.</${Note}>
     <div style="height:14px"></div>
 
     ${preset ? html`<${Note}><b>Setting</b> (<code>${presetName(preset)}</code>):
@@ -165,8 +164,7 @@ export function Strategy({name}){
         ("Maker order posted"), fee-free. If it gets hit → "Maker filled". Otherwise, at
         end of window, the order is "pulled" and we cross as taker ("Bet placed (taker)")
         so a favorite running straight away is never missed. On <b>paper</b>, a passive fill takes
-        only 0.7 of the size (adverse selection); on the <b>real pilot</b>, maker entry is now
-        <b>implemented</b> (<code>post_only</code> order + taker fallback). The gain — capturing the
+        only 0.7 of the size (adverse selection). The gain — capturing the
         spread — is still <b>to be proven in forward-test</b>.</${Note}></div>` : null}
     </${Panel}>
 

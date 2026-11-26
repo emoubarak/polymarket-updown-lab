@@ -1,26 +1,25 @@
-"""LIVE execution on Polymarket CTF Exchange V2 — the ONLY module that touches money.
+"""Optional live broker for Polymarket CTF Exchange V2 — DISABLED by default.
 
-Migrated 2026-06-20 to the April-2026 V2 upgrade (py-clob-client-v2, pUSD collateral,
-CTF Exchange V2, fees-at-match). Everything else in this repo is paper.
-Read docs/SETUP-LIVE.md before running.
+Written against the April-2026 V2 upgrade (py-clob-client-v2, pUSD collateral,
+CTF Exchange V2, fees-at-match). Everything else in this repo is paper; this module is
+kept only as the (disarmed) order-routing interface, and it is not used for paper trading.
 
 Safe by construction:
-  - DISARMED by default. Posts a real order ONLY if both env vars are set:
-        POLY_LIVE=1
-        POLY_CONFIRM=I_UNDERSTAND_REAL_MONEY
-    Otherwise every buy() is a DRY-RUN that logs the exact order it would send
-    (priced off the public read-only feed — no client, no key needed).
-  - NO BLIND ON-CHAIN TRANSFERS. Funding/wrapping (USDC→pUSD) is done in the
-    Polymarket UI; the pUSD→exchange allowance goes through the OFFICIAL client;
-    winning positions are redeemed in the UI. So a bug here can at most get an
-    order REJECTED — it can never move funds to the wrong place.
+  - DISARMED by default. It posts an order ONLY if both live-mode env vars
+    (POLY_LIVE and POLY_CONFIRM) are set. Otherwise every buy() is a DRY-RUN that logs
+    the exact order it would send (priced off the public read-only feed — no client,
+    no key needed).
+  - NO BLIND ON-CHAIN TRANSFERS. Funding/wrapping and redemption are left to the
+    Polymarket UI; the pUSD→exchange allowance goes through the OFFICIAL client.
+    So a bug here can at most get an order REJECTED — it can never move funds to the
+    wrong place.
   - HARD-CAPPED at MAX_CLIP_USD per order, no matter what the caller passes.
   - SECRET-FREE: the private key is read from POLY_PRIVATE_KEY env only.
   - REFUSES to trade below MIN_USDC_FLOOR of pUSD collateral.
 
 Dependency: py-clob-client-v2 (isolated here; imported lazily so the paper side
 stays stdlib-only). Auth is env-driven so the same code serves an EOA wallet
-(signature_type 0) or a Polymarket proxy/email account (1 or 2) — see SETUP.
+(signature_type 0) or a Polymarket proxy/email account (1 or 2).
 """
 from __future__ import annotations
 
@@ -49,7 +48,7 @@ def _attr(obj, name, default=None):
 
 class LiveBroker:
     """Thin, auditable wrapper over py-clob-client-v2 for marketable taker buys.
-    One responsibility: turn a sized decision into a real (or dry-run) fill.
+    One responsibility: turn a sized decision into an order (or a dry-run fill).
     It never sends an on-chain transaction — only signed CLOB orders + the
     official allowance call."""
 
@@ -85,7 +84,7 @@ class LiveBroker:
             creds = c.create_or_derive_api_key()
         c.set_api_creds(creds)
         self._client = c
-        mode = "DRY-RUN" if self.dry_run else "🔴 LIVE (real money)"
+        mode = "DRY-RUN" if self.dry_run else "🔴 LIVE (armed)"
         self.log(f"LiveBroker v2 connected — {mode} | sig_type={self._sig_type}")
 
     # ---------------------------------------------------------- balances ---
@@ -153,7 +152,7 @@ class LiveBroker:
         the price ACTUALLY payable must still be an extreme favorite, and the book
         must not have moved > ABANDON_BAND off the mid in EITHER direction. A
         favorite whose ask has SLIPPED below the floor by fill-time is a weakening
-        favorite (high reversal risk) — the paper skips it, so the pilot must too.
+        favorite (high reversal risk) — the paper skips it, so this broker must too.
         Pass min_fav/max_fav to enable them (default off = old behaviour)."""
         usd = min(usd, MAX_CLIP_USD)                 # hard cap, always
         if usd < 1.0:
@@ -170,7 +169,7 @@ class LiveBroker:
             return None
         # Sweep depth up to the slippage budget we ALREADY accept (mid + ABANDON_BAND),
         # not just the touch: a FAK at the touch fills only the best-ask level (~$1 on a
-        # thin book — the under-fill bug). Priced at mid+2c the FAK consumes every ask up
+        # thin book — an under-fill). Priced at mid+2c the FAK consumes every ask up
         # to the validated haircut then kills the rest, so we never pay more than the
         # paper assumes. Capped at max_fav so the sweep never lifts the favorite out of
         # its band. ask_acceptable already ensured ask <= mid+band AND ask <= max_fav,
@@ -262,7 +261,7 @@ class LiveBroker:
     # haircut + a higher price), REST a passive limit bid at the favorite's price
     # and let the market trade down into it (no haircut). Mirrors the paper engine
     # (favorite._place_maker / paper.MultiBroker). Only favorite_leadzmk-style strategies
-    # (params.maker_entry) ever call these — the taker pilots are untouched.
+    # (params.maker_entry) ever call these — the taker path is untouched.
     def place_limit(self, token_id: str, price: float, usd: float, direction: str,
                     slug: str, expiration: int = 0) -> dict | None:
         """Post a passive GTD limit BUY at `price` — a MAKER order (post_only, so it
@@ -405,8 +404,7 @@ class LiveBroker:
         """V2: collateral is pUSD, settlement is native USDC. Redemption of a won
         position is left to the Polymarket UI (or its auto-redeem) — we do NOT
         fire a blind on-chain tx whose collateral arg could be wrong under V2.
-        The won value sits safely in the position token until claimed; for a small
-        pilot, claim it in the UI."""
+        The won value sits safely in the position token until claimed."""
         self.log(f"win {condition_id[:10]}… — claim the winnings in the Polymarket UI "
                  f"(value is safe, no auto-redeem in V2)")
         return False

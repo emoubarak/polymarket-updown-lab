@@ -13,7 +13,7 @@ floor, z-score). Mapping table:
 | `kabbalah` | Buy the favorite confirmed by the model (`model_p_up − mid ≥ 0.10`) | Falsified (edge ≈0 + churn) |
 | `tao` | Trend-following executed as maker ("maker overreaction") | Falsified (loses big out-of-regime) |
 | `hermetic` | Delta-neutral market-making (passive quotes on both sides) | Falsified (adverse selection) |
-| `coagula` | Buy the extreme 5m favorite (timing + vol filter) | Falsified (cherry-pick, live −1.6%) |
+| `coagula` | Buy the extreme 5m favorite (timing + vol filter) | Falsified (cherry-pick, forward test −1.6%) |
 | `rubedo` | Bare extreme favorite, 15m, held to settlement | Archived → basis of zlead |
 | `rubedowide` | Rubedo with a widened entry band (0.80+) | Falsified |
 | `citrinitas` | Favorite + volatility filter | Falsified (beaten by the z-floor) |
@@ -29,7 +29,7 @@ The current engine lives in `pmlab/engine.py`; the archived presets are prefixed
 # Retroactive backtest — verdict on the edges (2026-06-14)
 
 ## Why
-Verify strategies without waiting through 12h live runs. We discovered that Polymarket
+Verify strategies without waiting through 12h forward runs. We discovered that Polymarket
 serves **for free and retroactively** (≥ 7 days) everything needed:
 
 - **Gamma** `/events?slug=btc-updown-5m-{ws}` → closed markets + `outcomePrices` = the **true
@@ -45,7 +45,7 @@ Tools: `dataset.py` (per-window cache, `--no-tape`/`--skip`/`--force`), `analyze
 
 ### 1. The real resolution is **Chainlink**, not Binance
 Market description: *"resolution source … Chainlink BTC/USD … Up if end ≥ start"*
-(tie → **Up**). The live engine settles on Binance `close > open` (tie → **Down**).
+(tie → **Up**). The paper engine settles on Binance `close > open` (tie → **Down**).
 → **3.5%** of windows diverge. A genuine engine defect to fix.
 
 ### 2. The model's directional edge = **temporal lookahead artifact**
@@ -79,23 +79,23 @@ tao is legitimate (it fills against the actual *future* tape and holds to settle
 exposure to the stale quote). With the full tape of the choppy day 06-10, per day
 (margin 0.18): **06-13 +236, 06-14 +122, 06-10 −395** → **total −37** (and −93 to −114 at
 the other margins). Its massive loss in choppy regimes erases everything. The initial +256
-was just a sample restricted to trending days; the +35 live was regime luck. **Not an
+was just a sample restricted to trending days; the +35 in the forward test was regime luck. **Not an
 edge — a momentum bet that loses big when BTC chops.**
 
 ## What is robust and real (non-artifact)
 - **Market ~efficient** on 5m: 6-day calibration close to the diagonal, Brier 0.207
   (coin-flip floor 0.25).
 - **Churn cost** (model-independent): taker exits (stop/TP) cost ~**+0.027/share**
-  vs holding. The bleeding brains lose through **double taker fees + churn**, not through
-  bad signals. → tao (maker, no churn) ≈ breakeven+; the taker churners bleed.
+  vs holding. The losing brains lose through **double taker fees + churn**, not through
+  bad signals. → tao (maker, no churn) ≈ breakeven+; the taker churners lose.
 - **Chainlink oracle** (cf. §1).
 
 ## Consequences for the strategies
 - **iching / gurdjieff**: directional premise with no tradeable alpha → do not expect
-  profit from them. At best, stop bleeding.
+  profit from them. At best, stop losing.
 - **kabbalah**: good idea (favorite) but (a) the favorite edge is ≈0 net, (b) churn destroys it.
   The only defensible fix = hold to settlement, never cross the book twice.
-- **tao**: net **negative** once tested out-of-regime (loses big on choppy days). The +35 live
+- **tao**: net **negative** once tested out-of-regime (loses big on choppy days). The +35 in the forward test
   was regime luck, not an annuity.
 - **hermetic**: silent control — consistent.
 
@@ -188,8 +188,8 @@ direction prediction — which is why it escapes this verdict.)*
 
 ## AUTOPSY 2026-06-17 — the favorite edge (coagula) was FALSE; 3rd research wave
 
-### The favorite-longshot edge was a cherry-pick. FALSIFIED live + backtest.
-Live forward test of `coagula` (97 trades, ~28h): win 84.5% vs break-even **85.2%**
+### The favorite-longshot edge was a cherry-pick. FALSIFIED in forward test + backtest.
+Forward (paper) test of `coagula` (97 trades, ~28h): win 84.5% vs break-even **85.2%**
 (avg gain +3.51, avg loss −20.25, asymmetry **1:5.8**) → PnL **−16.09 (−1.6%)**. Decisive
 signal: realized win **0.845 = price paid 0.842** → the favorite wins *exactly* at its
 price = efficient market, **zero mispricing**. The claimed "+8.6 pts" (win 0.93 at price
@@ -203,12 +203,12 @@ price = efficient market, **zero mispricing**. The claimed "+8.6 pts" (win 0.93 
 2. It is **regime momentum, not a mispricing.** Fresh-tape edge day by day: the only choppy
    in-sample day (06-10) is already NEGATIVE (win 82% < price); the 4 positive days were
    trending. The favorite wins more than its price **only when BTC trends** (it carries the
-   trend to settlement). The live period 06-15→17 was choppy → win collapsed onto the price.
+   trend to settlement). The forward-test period 06-15→17 was choppy → win collapsed onto the price.
    coagula entered at the right timing (2.5–3.25 min left) and at a good price (0.842) →
    **not a deployment bug; the edge itself does not exist.**
 
 **Lesson carved in stone: "days+ N/N in-sample" is worth NOTHING — only out-of-sample
-fresh-tape / live decides. Always report the realistic config, never the best cell.**
+fresh-tape / forward test decides. Always report the realistic config, never the best cell.**
 
 ### 3rd wave — new angles, all tested at the realistic bar (data extended to 06-17)
 - **Tie→Up rule = NULL.** Over 1544 5m windows: base P(up_won)=0.4948 (≈coin flip). Exact
@@ -217,7 +217,7 @@ fresh-tape / live decides. Always report the realistic config, never the best ce
   Up). Chainlink↔Binance divergence = 3.7%, all concentrated in the near-tie band. No edge.
 - **Outcome reversion = DEAD.** Betting against the previous outcome at the open:
   P(reverse)=0.5186 (n=2173, CI [0.498,0.540] — includes 0.50). Tradeable: **EV −0.019/$,
-  days+ 3/8** (−0.088 on the live day 06-15). The fee at ≈0.50 (its maximum) eats the
+  days+ 3/8** (−0.088 on the forward-test day 06-15). The fee at ≈0.50 (its maximum) eats the
   sub-1% skew.
 - **Risk-free arbitrage (Up_ask+Down_ask < 1) = NONEXISTENT.** 4-minute live probe on the
   real books: 5m raw min 0.9900 (once in 147), **net after fees 1.0012**; 15m never < 1
@@ -266,7 +266,7 @@ external review confirms we are not missing any edge accessible at this tier.**
 ## The poll rate (10s) is not a PnL lever (2026-06-22)
 
 Question: we poll every 10s; between two ticks we "lose" information and would miss
-opportunities. Dedicated backtest (`research/backtest_poll.py`): replicates the exact live
+opportunities. Dedicated backtest (`research/backtest_poll.py`): replicates the exact runner
 policy — **first qualifying tick** in the [0.55–0.65 elapsed] band (= enter 0.35–0.45
 remaining), one-shot, +2c haircut, hold to settle, real fees — and sweeps the poll step
 {continuous, 1, 5, 10, 30, 60, 90s}.
@@ -355,5 +355,5 @@ a fill ≈ the target stake. Taker twins UNCHANGED (maker_entry=False, tested). 
 CAVEAT (as always): the EV LEVEL is not OOS-validatable on the cache (only the tape
 windows carry the flow the fill model needs; 15m tape = a no-loser regime, 5m tape = 100%
 IS). The dashboard prior therefore does NOT pre-credit the gain: the paper forward test
-must prove it. Worst case = taker. On promotion to real money, revisit the
-oversizing (a real fill > 0.7 over-stakes).
+must prove it. Worst case = taker. Open point: the oversizing (a fill rate above
+0.7 would over-stake).

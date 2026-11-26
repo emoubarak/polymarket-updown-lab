@@ -1,10 +1,8 @@
 """The favorite-family ENTRY GATE — the single source of truth for "should we act
 on this window, and which side?".
 
-Used by BOTH the paper runner (favorite.on_tick) and the real pilot (run_live), so
-the two can NEVER drift. They HAD drifted: a guard the paper had and the pilot
-lacked cost the live pilot 2 losses the paper avoided. The lesson — mutualise the
-decision, don't duplicate it — lives here.
+Used by the paper runner (favorite.on_tick); the decision lives in ONE place. The
+lesson — mutualise the decision, don't duplicate it — lives here.
 
 Pure and broker-agnostic (stdlib only): it takes the market scalars and returns a
 (direction, favorite-mid) decision or None. The EXECUTION guards that depend on the
@@ -20,19 +18,17 @@ from dataclasses import dataclass
 
 def favorite_of(mid_up):
     """(direction, favorite-mid) from the Up-token midpoint — the canonical favorite
-    identification. Shared by the gate AND the maker taker-fallbacks (paper + real),
-    so a favorite that FLIPPED mid-rest is handled identically on both sides (the
-    fallback used to keep the stale direction on the real path — a drift)."""
+    identification. Shared by the gate AND the maker taker-fallbacks, so a favorite
+    that FLIPPED mid-rest is handled identically everywhere."""
     direction = "Up" if mid_up >= 0.5 else "Down"
     return direction, (mid_up if direction == "Up" else 1.0 - mid_up)
 
 
 # top-up: the validated stake is a TARGET, not a single shot. A first taker fill can
-# be depth-limited on a thin book (the live btc-15m pilot once got $5 of an intended
-# $30 — the touch had ~6 shares inside the +2c band and FAK killed the rest), so the
-# engine keeps buying toward the target across the entry slot instead of accepting the
-# partial. Shared by paper (favorite._taker_enter) and real (run_live._maybe_enter) so the
-# rule can't drift. The fills are MERGED into one position (one settlement, honest count).
+# be depth-limited on a thin book (the touch can have only a few shares inside the +2c
+# band, and a FAK order kills the rest), so the engine keeps buying toward the target
+# across the entry slot instead of accepting the partial. Defined once (used by
+# favorite._taker_enter) so the rule can't drift. The fills are MERGED into one position (one settlement, honest count).
 FILL_TARGET_TOL = 0.95     # a window is "filled" at >= 95% of target (stop chasing the
 #                            last few % through a thin book; book/rounding noise)
 
@@ -61,10 +57,10 @@ def lead_z(spot, window_open, sigma, tau_min, direction):
 
 def ask_acceptable(ask, mid, min_fav, max_fav, band=0.02):
     """The shared EXECUTION guard for crossing the ask, used by BOTH paper
-    (favorite._taker_enter) and real (live.buy): the executable ask must still be an
+    (favorite._taker_enter) and the live broker (live.buy): the executable ask must still be an
     extreme favorite (in [min_fav, max_fav]) AND within `band` of the decision mid
     (the book hasn't run off it, in EITHER direction). THIS is the rule that drifted
-    once and cost 2 real losses — it lives here, once. False if ask is None."""
+    once — it lives here, once. False if ask is None."""
     return ask is not None and min_fav <= ask <= max_fav and abs(ask - mid) <= band
 
 
@@ -91,13 +87,13 @@ LS_FLOW_CAP_BY_FRAME = {"5m": 2.7, "15m": 2.4}
 def ls_flow_cap_for(frame, base: float = 2.5) -> float:
     """The per-frame longshot-flow threshold for zleadp/zleadf. `base` (the preset's ls_flow_cap, used
     only as the enable-flag/fallback) is returned for an unknown frame so behaviour never silently
-    breaks. SHARED by paper + real so the per-frame routing can't drift."""
+    breaks. Defined once so the per-frame routing can't drift."""
     return LS_FLOW_CAP_BY_FRAME.get(frame, base)
 
 
 def flow_tilt_mult(ls_flow_ratio, cap, enabled) -> float:
     """Stake multiplier for the longshot-flow tilt (1.0 = neutral). UP when longshot flow is below the
-    cap (clean window), DOWN when at/above it (informed-fade-heavy window). Shared by paper + real."""
+    cap (clean window), DOWN when at/above it (informed-fade-heavy window)."""
     if not enabled or not cap or ls_flow_ratio is None:
         return 1.0
     return FLOW_TILT_UP if ls_flow_ratio < cap else FLOW_TILT_DOWN
@@ -140,7 +136,7 @@ class EntryGate:
         """Return (direction, mid_fav) if the window qualifies for entry, else None.
 
         mid_up = midpoint price of the Up token; the favorite mid is mid_up or
-        1-mid_up (matches Ctx.mid_for and run_live identically). sigma = EWMA 1m vol,
+        1-mid_up (matches Ctx.mid_for identically). sigma = EWMA 1m vol,
         window_open = price at the window's open, tau_min = minutes left, window_min =
         window length. Only the scalars the active gates need must be real; pass 0 for
         the rest (needs_spot tells you whether they matter). btc_lead = BTC's signed

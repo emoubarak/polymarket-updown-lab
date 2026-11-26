@@ -2,9 +2,6 @@ __pycache__/
 *.pyc
 paper_state*/
 state_*/
-live_state*/
-pilot_status.json
-pilot_registry.json
 .live_env
 *.log
 history/

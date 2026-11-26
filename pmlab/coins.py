@@ -3,9 +3,9 @@ else derives. Adding a coin = ONE line here (and a per-coin slot/depth if measur
 
 This kills the coin-list duplication that had already drifted across the codebase
 (webdash._TOKENS was stuck at 4 coins while feeds/format.js/presets carried 6):
-  feeds.SYMBOL · presets.COIN_BET_MAX · presets.COIN_SLOTS · main/run_live --underlying
+  feeds.SYMBOL · presets.COIN_BET_MAX · presets.COIN_SLOTS · main --underlying
   choices · webdash._TOKENS · research/dataset.SYMBOL · front-end (format.js TOKENS,
-  About COIN_ORDER, Pilot dropdown) — all now derive from COINS (the front-end via /config).
+  About COIN_ORDER) — all now derive from COINS (the front-end via /config).
 
 Leaf module: it imports NOTHING from the package, so both feeds.py (low-level data) and
 presets.py (strategy config) can import it without a cycle. The legacy dict names

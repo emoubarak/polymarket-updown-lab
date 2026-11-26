@@ -1,6 +1,6 @@
 # Polymarket liquidity rewards & maker rebates — precise spec
 
-Goal: replicate **std0** (`0xdf7930e89a2c47560165331863c31deca0733dcd`), whose profit is
+Goal: understand **std0** (`0xdf7930e89a2c47560165331863c31deca0733dcd`), whose profit is
 ~75 % from `MAKER_REBATE`/`TAKER_REBATE` (~$1k–1.8k/day), not spread. This is the exact
 mechanic, verified against the live gamma/CLOB/data APIs (2026-06-28) and the official docs.
 
@@ -74,17 +74,15 @@ daily cadence). Maker is the dominant stream; treat taker rebate as a smaller bo
 
 ---
 
-## 2. Eligibility — can our wallet just quote and earn? **Yes.**
+## 2. Eligibility — can any wallet just quote and earn? **Yes.**
 
 - Docs: *"Place orders that add liquidity to the book and get filled."* **No registration,
   no opt-in, no KYC, no builder/program enrollment, no minimum-size-to-qualify** for the
   rebate. Rebates are computed automatically from on-chain fills and paid to the
   `maker_address` (the proxy wallet that owns the order).
-- Our wallet `0x32D30125710521fF3Bf174d6440374Cb39634029` (sig_type 3 Polymarket deposit/proxy,
-  signer EOA `0x9C9A11397E70e2560145c8EDdeaC90209B008f15`) is **architecturally identical** to
-  std0's proxy. sig_type is irrelevant to rebate eligibility. **It qualifies by simply quoting
-  crypto Up/Down and getting filled.** (For the Qmin program you'd also need a market that has
-  a pool — crypto Up/Down doesn't — so that path is moot here.)
+- sig_type is irrelevant to rebate eligibility: any wallet type (sig_type 2 Safe, sig_type 3 deposit wallet, …)
+  **qualifies by simply quoting crypto Up/Down and getting filled.** (For the Qmin program a market with a
+  pool would also be needed — crypto Up/Down has none — so that path is moot here.)
 
 ---
 
@@ -195,12 +193,12 @@ the −60 s cutoff and tiny clips control.
 ## Open items / caveats
 - **`TAKER_REBATE` mechanism** isn't in the public maker-rebates article; it's an observed
   taker-side rebate (~$350–600/day for std0) on the same 0.07 crypto fee. Treat as a bonus.
-- The **Qmin formula** (§1A) is included for completeness and applies if we ever make markets
+- The **Qmin formula** (§1A) is included for completeness and applies to markets
   that *do* carry a fixed pool (most non-crypto markets) — but it is **irrelevant to crypto
   Up/Down**, which pay purely via the fee rebate.
 - Code note: repo currently has `FEE_RATE=0` in places; the fee **is real (0.07 taker)** and is
-  what funds the rebate — relevant if we model net economics of our own taker crosses.
-- Rebate share is **pro-rata across makers**; our earnings = std0-like only if we win a similar
+  what funds the rebate — relevant when modelling the net economics of taker crosses.
+- Rebate share is **pro-rata across makers**; a maker's earnings match std0's only with a similar
   share of filled volume. More competition compresses both spread and rebate share.
 
 Sources: docs.polymarket.com/market-makers/liquidity-rewards ·

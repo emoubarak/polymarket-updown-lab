@@ -1,11 +1,11 @@
-"""std0-competitive HFT maker — WebSocket-driven, co-located, sub-second re-quote.
+"""std0-competitive HFT maker — WebSocket-driven, sub-second re-quote.
 
 The poll-1s rewardmm bot is a bike in an F1 race: it sees the book ~1s stale and gets adversely
 selected. std0's edge is SPEED — it re-prices the instant the (leading) Binance spot moves, before the
-(lagging) CLOB taker can hit its stale quote. We already have the chassis (Dublin 22ms RTT). This is
+(lagging) CLOB taker can hit its stale quote. This is
 the engine: real-time market data over WebSocket, not REST polls. Measured: WS delivers book updates in
 ~ms vs the 1s poll = ~1000× faster reaction. Language is NOT the bottleneck (network RTT 22ms dominates;
-Python parse+sign ~5ms is noise) — the levers are WS + async order ops + pre-signed orders + co-loc.
+Python parse+sign ~5ms is noise) — the levers are WS + async order ops + pre-signed orders + low latency.
 
 This module = the live market-data layer first (LiveBook from the CLOB /ws/market feed). The quote/skew
 engine + async order ops build on top. Validate every layer in DRY (real data, no money) before live.
@@ -21,12 +21,12 @@ import time
 
 import websocket  # websocket-client (pip)
 
-from . import mm_guard  # safety invariants (stdlib) — HALT on the bugs that cost real money
+from . import mm_guard  # safety invariants (stdlib) — HALT on classic market-making bugs
 
 CLOB_WS = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
 CLOB_USER_WS = "wss://ws-subscriptions-clob.polymarket.com/ws/user"
 BINANCE_WS = "wss://stream.binance.com:9443/ws"
-# on-chain set ops (mint/merge) backend — Safe self-submit via MINT_JS=~/mint/safeops.js
+# on-chain set ops (mint/merge) backend — override the helper script with MINT_JS
 SETOPS_JS = os.path.expanduser(os.environ.get("MINT_JS", "~/mint/setops.js"))
 
 
@@ -190,10 +190,9 @@ class HftMM:
         self.fills = 0
         self.fill_pq = 0.0                            # Σ p(1−p)·filled → maker rebate ≈ 0.014·this
         self.killed = False
-        # safety harness: on any invariant violation → cancel all + EXIT (the watchdog restarts fresh with a
-        # clean on-chain re-sync). Exit, not just killed=True: a killed-but-alive process stays inert and the
-        # watchdog (which checks pgrep) never relaunches it → "no bets for 20min". A persistent bug loops
-        # visibly (wd_restarts climbs) instead of dying silently.
+        # safety harness: on any invariant violation → cancel all + EXIT (a supervisor restarts it fresh with a
+        # clean on-chain re-sync). Exit, not just killed=True: a killed-but-alive process stays inert and a
+        # pgrep-based supervisor never relaunches it. A persistent bug loops visibly instead of dying silently.
         self.guard = mm_guard.Guard(log=self.log, on_halt=self._on_guard_halt)
         self._flattened = False                        # reclaimed (merged) this window? (once per window)
         self._pusd = 0.0
@@ -236,7 +235,7 @@ class HftMM:
         ask_up, ask_dn = round(cu + d, 2), round(cd + d, 2)
         # OFFLOAD THE LOSER — std0's actual small-scale mechanism (46% of its 26-05 sells were at <0.25). When
         # the inventory skew pushes the HELD (losing) side's ask below the best bid, post-only REJECTS it → the
-        # gate turns that ask OFF → we KEEP the loser → 100% directional (the ±$10 swings). Instead, REST it
+        # gate turns that ask OFF → we KEEP the loser → 100% directional. Instead, REST it
         # just above the best bid: an aggressive MAKER sell that chases the falling side down each requote and
         # gets lifted by dip-buyers. Earns the rebate, never a taker dump. Strictly ≥ old behavior: if no dip-
         # buyer shows, it's the same as before (kept, flatten backstops at settle) — it can only help.
@@ -305,7 +304,7 @@ class HftMM:
         # guard.check_mark: a −mark deeper than the block is a phantom (redeem lag), not a loss → don't kill
         if self.mark <= -self.kill_loss and holding and (now - self._roll_ts) > 35 and not settle_zone \
                 and self.guard.check_mark(self.mark, self.minted):
-            # lag (the matched block always redeems ~whole), never a real loss. Real bleed = while holding.
+            # lag (the matched block always redeems ~whole), never an actual drawdown; a genuine drawdown shows up while holding.
             self.log(f"🛑 KILL mark {self.mark:+.2f} (on-chain)"); self.killed = True; self._cancel_all(); return
         if self.window_end - now <= self.flatten_buf:
             self._cancel_all()
@@ -374,21 +373,21 @@ class HftMM:
             self._cancel(k)
 
     def _on_guard_halt(self):
-        """A guard invariant tripped → cancel everything and EXIT the process so the watchdog restarts it
-        fresh (a killed-but-alive process would sit inert and never get relaunched → no bets)."""
+        """A guard invariant tripped → cancel everything and EXIT the process so a supervisor restarts it
+        fresh (a killed-but-alive process would sit inert and never get relaunched)."""
         self.killed = True
         try: self._cancel_all()
         except Exception as e: self.log(f"halt cancel err: {e}")
-        self.log("🛑🛡 guard halt → exiting for a clean watchdog restart")
+        self.log("🛑🛡 guard halt → exiting for a clean restart")
         os._exit(1)
 
     def _reclaim(self):
         """End of window — MERGE the matched block to reclaim capital IMMEDIATELY (no auto-redeem lag that
         locks pUSD past the next window's open → missed windows). 1 Up+1 Down = $1 pUSD, guaranteed by the
-        CTF contract PRE-resolution (mergePositions, self-submit via the Safe = zero quota, instant, no
+        CTF contract PRE-resolution (mergePositions, on-chain self-submit = zero quota, instant, no
         oracle wait). We do NOT flatten/dump the small residual — std0 doesn't (it holds ~8% to auto-redeem);
         our residual is ≤ max_inv (stop-when-leaning) so it just redeems at settle for ±a few $, cheaper than
-        a taker dump (the dump cost −$26). Dry: in-memory. The tracker reads MERGE + REDEEM on-chain."""
+        a taker dump. Dry: in-memory. The tracker reads MERGE + REDEEM on-chain."""
         if self._flattened:
             return
         self._flattened = True
@@ -410,7 +409,7 @@ class HftMM:
                     self.log(f"merge err: {e}")
         # STEP 2 — flatten the residual ALWAYS (even when matched==0). The 100%-one-sided residual (0/15) is
         # the WHOLE directional problem — the old `if matched<1: return` skipped this exact case → imbalance
-        # stayed 100%. Realize it near the mid (mid≈fair at settle → ~no cost; NOT the 0.02 dump that cost −$26).
+        # stayed 100%. Realize it near the mid (mid≈fair at settle → ~no cost; NOT a dump at the 0.02 floor).
         excess = round(self.inv_up - self.inv_dn, 2)
         if abs(excess) >= 1:
             up = excess > 0
@@ -430,7 +429,7 @@ class HftMM:
                 except Exception as e:
                     self.log(f"flatten err: {e}")
 
-    # ---- on-chain set ops + truth sync (Safe self-submit) ----
+    # ---- on-chain set ops + truth sync (self-submit helper) ----
     def _mint(self):
         if self.dry:
             self.minted = self.mint_usd; self.inv_up += self.mint_usd; self.inv_dn += self.mint_usd
@@ -457,8 +456,8 @@ class HftMM:
         except Exception: return self._pusd
 
     def _sync_onchain(self):
-        """The ONLY P&L source: read real pUSD + held tokens, mark = (pUSD + inventory value) − baseline.
-        This is measured on-chain so it CANNOT phantom (the cash-flow model kept doing so). inv_value =
+        """The ONLY P&L source: read on-chain pUSD + held tokens, mark = (pUSD + inventory value) − baseline.
+        This is measured on-chain so it CANNOT phantom (a cash-flow model can). inv_value =
         matched sets ($1 each) + residual imbalance at the live mid. Re-quote-time kill is suppressed for
         35s after a roll because the just-settled block's auto-redeem LAGS pUSD (else a roll-time dip)."""
         if self.dry or not self.tok_up:
@@ -472,10 +471,10 @@ class HftMM:
             if ud:
                 chain_up, chain_dn = float(ud.group(1)), float(ud.group(2))
                 # RECONCILE engine-tracked inv (from fills) vs on-chain truth → HALT if the fill tracking
-                # lied (the −60% desync). Skip the roll/reclaim transient (inv legitimately in flux there).
+                # lied. Skip the roll/reclaim transient (inv legitimately in flux there).
                 if (time.time() - self._roll_ts) > 40 and not self._flattened and self.minted > 1:
                     # tol must exceed a couple of in-flight clips (a fill matched on-chain before its WS msg
-                    # is a NORMAL 5-share gap, not a bug). A real parse desync (114 vs 5) blows way past this.
+                    # is a NORMAL 5-share gap, not a bug). A real parse desync blows way past this.
                     self.guard.reconcile_inv(self.inv_up, self.inv_dn, chain_up, chain_dn,
                                              tol=max(2 * self.clip + 2, 0.25 * self.minted))
                 self.inv_up, self.inv_dn = chain_up, chain_dn
@@ -485,7 +484,7 @@ class HftMM:
             wealth = self._pusd + inv_val                 # TOTAL wealth = cash + held inventory value
             if self.baseline_pusd is None:
                 # PERSIST the P&L-zero across RESTARTS — else each restart re-bases to current wealth, so the
-                # kill measures per-session drawdown from an arbitrary peak → repeated FALSE kills (paid for).
+                # kill measures per-session drawdown from an arbitrary peak → repeated FALSE kills.
                 bf = f".hft_baseline_{self.coin}_{self.iv}.json"
                 try:
                     if os.path.exists(bf):
@@ -495,7 +494,7 @@ class HftMM:
                         json.dump({"baseline": wealth}, open(bf, "w"))
                 except Exception:
                     self.baseline_pusd = wealth
-            self.mark = wealth - self.baseline_pusd        # real cumulative P&L vs the true (persisted) start
+            self.mark = wealth - self.baseline_pusd        # cumulative P&L vs the true (persisted) start
             self.realized = self.mark
         except Exception as e:
             self.log(f"sync err: {e}")
@@ -509,7 +508,7 @@ class HftMM:
         up = (token == self.tok_up)
         self.fills += 1
         self.fill_pq += price * (1 - price) * size
-        # structured per-fill log → eps_reader computes per-fill edge = (mid-px) BUY / (px-mid) SELL.
+        # structured per-fill log, from which per-fill edge = (mid-px) BUY / (px-mid) SELL is computed.
         # mid at fill-time is the drift-free benchmark (std0 captures +0.22c; we measure ours).
         fmid = self.book.mid(token) if self.book else None
         self.log(f"FILL {'Up' if up else 'Down'} {side} px={price} mid={fmid} sz={size} slug={self.slug}")
@@ -520,8 +519,8 @@ class HftMM:
             if up: self.inv_up += size
             else:  self.inv_dn += size
         # HARD imbalance cap — the reason std0 has NO slip tail: it holds a MATCHED block and never sells one
-        # side to 0. Our max_inv gate leaked because requote is throttled (0.12s) → a burst kept selling the
-        # winner past the cap → 15/0 one-sided → directional slip. So the INSTANT a fill breaches max_inv,
+        # side to 0. Our max_inv gate can leak because requote is throttled (0.12s) → a burst keeps selling the
+        # winner past the cap → one-sided → directional slip. So the INSTANT a fill breaches max_inv,
         # cancel the OVER-sold side's ask NOW (bypass the throttle). We then hold a matched block → merge/redeem
         # → neutral by construction. Cancelling an ask only REDUCES selling → can't make things worse.
         imb = self.inv_up - self.inv_dn
@@ -613,7 +612,7 @@ class UserFeed:
             if not isinstance(e, dict):
                 continue
             # FILLS come from OUR "order" events (size_matched), NOT "trade" events — a trade event carries
-            # the TAKER's size/side + the counterparty maker (0xE357, not us) → that was the 114-vs-5 misparse.
+            # the TAKER's size/side + the counterparty maker (not us) → counting it would misparse our fills.
             # Our order event: {event_type:"order", id, asset_id, side, size_matched, price}. Count the DELTA.
             if (e.get("event_type") or "").lower() != "order":
                 continue
@@ -736,7 +735,7 @@ def _test_engine(coin="eth", interval="5m", secs=30, wide="1"):
 def _paper_test(coin="eth", interval="5m", secs="240", band="0.40,0.60", maxinv="6", skewk="2.0", mint="100"):
     """THE validation harness (zero money): run the FULL engine in paper — mint, quote, fills simulated
     against the REAL WS book, skew, roll — over many windows, and report the IMBALANCE distribution (the
-    goal: does the fast engine + skew hold ~5% like std0 vs the old poll-bot's ~10%?) + paper P&L."""
+    goal: does the fast engine + skew hold ~5% like std0?) + paper P&L."""
     from . import feeds
     secs = int(secs)
     sec = {"5m": 300, "15m": 900}[interval]
@@ -784,7 +783,7 @@ def _paper_test(coin="eth", interval="5m", secs="240", band="0.40,0.60", maxinv=
         p = lambda q: imb[min(len(imb) - 1, int(q * len(imb)))]
         mref = max(mm.minted, 100.0)
         print(f"IMBALANCE |inv_up−inv_dn| (the goal): p50={p(.5):.1f}sh ({p(.5)/mref*100:.0f}%) "
-              f"p90={p(.9):.1f}sh ({p(.9)/mref*100:.0f}%) max={imb[-1]:.1f}sh — std0≈5%, old poll-bot≈10%")
+              f"p90={p(.9):.1f}sh ({p(.9)/mref*100:.0f}%) max={imb[-1]:.1f}sh — std0≈5%")
     print(f"paper P&L (mark-to-mid): {mm.mark:+.2f} | maker-rebate≈${0.014*mm.fill_pq:.3f} | "
           f"killed={mm.killed}")
 

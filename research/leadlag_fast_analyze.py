@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Sub-second cross-correlation of the btc->doge fast probe (leadlag_fast/fast.csv on AWS).
+"""Sub-second cross-correlation of the btc->doge fast probe (leadlag_fast/fast.csv, written by the capture host).
 Peak at lag>0 (100-800ms) = real capturable sub-second lag = the outlier. Peak at 0 = contemporaneous
-(artifact). Run on AWS:  python3 research/leadlag_fast_analyze.py
+(artifact). Run where fast.csv lives:  python3 research/leadlag_fast_analyze.py
 """
 import os, statistics as st
 from collections import defaultdict

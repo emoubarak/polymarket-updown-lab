@@ -1,10 +1,10 @@
 package main
 
-// ordertest.go — one-shot live plumbing check (build-order step 4): send a
-// heartbeat, rest a single deep-OTM post-only bid at the venue minimum size
-// (5 shares @ $0.01 = $0.05 exposure), confirm it is live, cancel it.
-// Validates production acceptance of our V2 signatures, L2 auth, heartbeat
-// and cancel path without meaningful capital at risk.
+// ordertest.go — one-shot plumbing check that is disabled unless explicitly
+// confirmed through the environment: send a heartbeat, rest a single
+// deep-OTM post-only bid at the venue minimum size (5 shares @ $0.01), check
+// that it rests on the book, then cancel it. Exercises the order-signing,
+// L2 auth, heartbeat and cancel paths end to end.
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// runBalanceCheck prints the venue's own view of our collateral (the
+// runBalanceCheck prints the venue's own view of the account's collateral (the
 // authoritative answer — on-chain balanceOf can lag or look elsewhere).
 func runBalanceCheck() {
 	cfg, err := LoadConfig(false)

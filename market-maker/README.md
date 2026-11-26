@@ -3,9 +3,9 @@
 Ultra-low-latency Go market maker for Polymarket's "Bitcoin Up or Down"
 5-minute binary markets. Maintains one passive bid and one passive ask per
 window, priced from `Phi(d2)` with EWMA volatility and Avellaneda–Stoikov
-inventory skew. Runs on AWS eu-west-1 (Dublin).
+inventory skew. Research code, with a paper simulator (`paper.go`).
 
-## Verified venue facts (live, 2026-07-01/02)
+## Venue facts (observed 2026-07-01/02)
 
 | Item | Value |
 |---|---|
@@ -21,8 +21,8 @@ inventory skew. Runs on AWS eu-west-1 (Dublin).
 
 Signing (EIP-712 order digest + signature, ClobAuth L1, L2 HMAC) is
 cross-validated byte-for-byte against `eth-account`
-(`REBATE_PRINT_VECTORS=1 go test -run TestPrintSigningVectors -v` piped into
-`verify_signing.py`), and validated against production via `--order-test`.
+(`REBATE_PRINT_VECTORS=1 go test -run TestPrintSigningVectors -v` prints the
+vectors, which are compared with eth-account's output).
 
 ## Architecture
 
@@ -79,12 +79,13 @@ Requote gate (all must pass): theoretical moved ≥ `REQUOTE_MIN_MOVE` (1 tick)
 ## Running
 
 ```bash
-# on the VPS
-source ~/.poly_env_bbe3        # POLY_PRIVATE_KEY / POLY_FUNDER / POLY_SIG_TYPE
-./rebate                       # DRY-RUN (default): full pricing, no orders
-REBATE_LIVE=yes ./rebate -order-test   # one 5¢ post-only order: post→rest→cancel
-REBATE_LIVE=yes ./rebate --live        # LIVE trading (both gates required)
+# Config is read from the environment (see config.go); POLY_PRIVATE_KEY is
+# required by the config loader even in dry/paper mode.
+./rebate            # DRY-RUN (default): full pricing, no orders
+./rebate --paper    # PAPER: fills simulated against the live book prints
 ```
+
+A live mode exists in code but is disabled and undocumented.
 
 Key env knobs (defaults in parentheses): `QUOTE_SIZE` (5), `HALF_SPREAD`
 (0.02), `LAMBDA` (0.0004), `MAX_POSITION` (50), `MAX_OPEN_NOTIONAL` (25),
@@ -94,21 +95,15 @@ Key env knobs (defaults in parentheses): `QUOTE_SIZE` (5), `HALF_SPREAD`
 Tests (race detector on): `go test -race ./...`
 Benchmark: `go test -run='^$' -bench=. .` → full pricing path ~114 ns, 0 allocs.
 
-## Build/deploy loop
-
-Developed locally, built/tested on the VPS (`rebate-vps` SSH alias):
+## Build
 
 ```bash
-rsync -az --exclude .git ./ rebate-vps:~/rebate/
-ssh rebate-vps 'cd ~/rebate && export TMPDIR=$HOME/gotmp GOTMPDIR=$HOME/gotmp \
-  PATH=$PATH:/usr/local/go/bin && go test -race ./... && go build -o rebate .'
+go test -race ./... && go build -o rebate .
 ```
-
-(`/tmp` on the VPS is a tiny tmpfs — keep Go's temp dirs on `$HOME`.)
 
 ## Safety properties
 
-- Dry-run default; live needs `--live` AND `REBATE_LIVE=yes`.
+- Dry-run default; a live mode exists in code but is disabled and undocumented.
 - Kill switch is one-way per process; trips on strike/oracle divergence >1%.
 - Quote gate blocks on: stale Chainlink (>8s) / stale Binance (>5s) /
   3 consecutive heartbeat failures / cold vol / unknown strike / caps.
@@ -122,8 +117,9 @@ ssh rebate-vps 'cd ~/rebate && export TMPDIR=$HOME/gotmp GOTMPDIR=$HOME/gotmp \
 
 ## Known limitations / next steps
 
-- Dry-run does not simulate fills (no market-book subscription yet), so it
-  validates pricing/plumbing, not expected P&L.
+- Dry-run does not simulate fills, so it validates pricing/plumbing, not
+  expected P&L; paper mode (`--paper`) simulates fills against the book and
+  trade prints.
 - Strike sanity check is against our RTDS view at fetch time (1% band);
   a Polygon RPC Chainlink read would be a stronger independent source.
 - `crypto-price` strike endpoint is undocumented (reverse-engineered from

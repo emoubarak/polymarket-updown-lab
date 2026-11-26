@@ -2,7 +2,7 @@
 """Re-apply the 0.07 taker fee to accumulated paper ledgers — the inverse of defee_paper.
 
 The 0.07 crypto taker fee IS charged on-chain — re-verified 2026-06-27 from raw tx receipts
-(wallet 0xd630…, NEW pUSD relayer 0xe111…): the wallet debits exactly usdcSize = size×price +
+(NEW pUSD relayer 0xe111…): the trader wallet debits exactly usdcSize = size×price +
 fee at ENTRY, and the fee = 0.07×p×(1−p)×shares is forwarded in pUSD to collector 0x115f48dc
 on BOTH 5m AND 15m (never at settlement). The 2026-06-26 defee_paper run (which zeroed the fee
 as a "phantom") was the error — it tracked USDC.e transfers and MISSED the pUSD fee leg. This
@@ -34,7 +34,7 @@ TAKER_ENTRY = ("BUY", "BUY+")              # ONLY taker crossings pay the fee
 # enters the position (cash/notional) at fee 0. Applying the taker fee to it would be wrong
 # (it inflated zleadmk ledgers in the first refee pass; the .prefee backups show fee=0 there).
 CLOSE = ("SETTLE_WIN", "SETTLE_LOSS")
-NON_CRYPTO = ("state_events", "state_copy", "live_state")
+NON_CRYPTO = ("state_events", "state_copy")
 
 
 def base(k: str) -> str:

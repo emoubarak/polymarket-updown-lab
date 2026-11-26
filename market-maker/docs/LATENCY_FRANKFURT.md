@@ -1,15 +1,12 @@
 # Results — BTC feed speed optimization from Frankfurt
 
-> AWS VPS **eu-central-1b (Frankfurt)**, `3.79.190.157`. Measurements 2026-07-03.
-> Goal: capture the BTC price as fast as possible + verify that Polymarket
-> trading is allowed from Frankfurt.
+> Measurements from an AWS host in **eu-central-1b (Frankfurt)**, 2026-07-03.
+> Goal: capture the BTC price as fast as possible.
 
 ## TL;DR
 
 - **Optimal feed found: Bitstamp `order_book_btcusd` = 10 ms median, 4 ms min,
   9.7 updates/s.** 5× faster than Coinbase, 12× faster than Binance.
-- **Trading allowed from Frankfurt**: Polymarket auth OK, balance retrieved,
-  IP not geo-blocked.
 - **Frankfurt is justified only via Bitstamp** (co-located at AWS Frankfurt) —
   for the other feeds (Cloudflare), the region changes almost nothing.
 
@@ -40,8 +37,8 @@
    physically at AWS Frankfurt, benefits from co-location (32 ms Dublin →
    10 ms Frankfurt).
 
-3. **Binance was the dead weight**: 118 ms (streaming servers in Tokyo).
-   It was the real cause of the "slow trader" problem on Dublin.
+3. **Binance is among the slowest feeds measured**: 118 ms (streaming
+   servers in Tokyo).
 
 4. **We are at the accessible frontier**: 4 ms min = pure intra-datacenter
    network. Going below that requires a FIX/pro feed (institutional
@@ -54,24 +51,13 @@ BTC/USD** price, which is **the settlement price of Polymarket's btc-updown
 markets**. Using Bitstamp therefore doesn't just give us a fast feed — it
 brings us closer to the **settlement source of truth**. Double advantage.
 
-## 4. Trading allowed from Frankfurt ✅
+## 4. Design consequence: use the Bitstamp order_book as the fast signal
 
-`./rebate -balance` from `3.79.190.157`:
-- L2 auth (HMAC) accepted, `balance:68713747` ($68.71) returned, allowances OK.
-- The CLOB API does not geo-block the Frankfurt IP (same as Dublin). Order
-  placement will go through (same auth barrier as the GETs, which work).
+The bot used Binance (118 ms) as its fast price feed. Rewiring it to the
+**Bitstamp order_book** means going from 118 ms to 10 ms of feed latency,
+i.e. ~108 ms of anticipation on every move.
 
-## 5. Next step: integrate the Bitstamp order_book into the bot
-
-The bot currently uses Binance (118 ms) as its fast price feed. Rewiring it
-to the **Bitstamp order_book** = going from 118 ms to 10 ms of feed latency
-→ gaining ~108 ms of anticipation on every move. This is the lever that
-transforms the adverse selection (see `JOURNAL.md`).
-
-VPS config: SSH alias `fra`, Go + venv installed, bot compiled, `bbe3` key
-in place.
-
-## 6. Integration done & confirmed (2026-07-03)
+## 5. Integration done & confirmed (2026-07-03)
 
 `bitstamp.go` client added (order_book, same interface as Binance, 64KiB
 buffer). Wired into the pricing loop: Bitstamp is preferred over Binance as
@@ -87,4 +73,3 @@ cl=61939.45(0.3s)  bn=62004.01(0.1s)  bs=61944.76(0.0s)
   (BTC/USDT ≠ BTC/USD) → Bitstamp predicts the settlement oracle far better
   than Binance.
 
-No real trades executed (dry-run only, as requested).

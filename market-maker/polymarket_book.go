@@ -6,7 +6,7 @@ package main
 // Purpose: competitive, post-only-safe order placement. The model gives the
 // LIMIT (the worst price we're willing to trade at); the book gives the
 // PLACEMENT (top-of-book without crossing). This kills the "post-only order
-// crosses book" spam observed live and maximizes maker fill volume — which
+// crosses book" rejections and maximizes maker fill volume — which
 // is what earns crypto-market maker rebates (20% of taker fees, pro-rata by
 // fee-equivalent filled maker volume).
 //

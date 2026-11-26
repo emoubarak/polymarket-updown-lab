@@ -98,7 +98,7 @@ func (r *Risk) EvaluateGate(in GateInput) GateResult {
 	// PREDICTIVE position cap: a side may quote only if its worst-case
 	// fill keeps |net| within the cap. The reactive form (block once
 	// breached) let resting + in-flight orders stack residuals to ~2x the
-	// cap — measured repeatedly at settlement, the dominant loss channel.
+	// cap — residuals held through settlement are a dominant loss channel.
 	if in.NetShares+in.BidOutstanding > r.Limits.MaxPositionShares {
 		g.AllowBid = false
 		g.Reason = "long cap (predictive)"

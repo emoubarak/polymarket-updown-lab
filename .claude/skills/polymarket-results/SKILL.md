@@ -31,9 +31,9 @@ curl -s http://<VPS_IP>:8420/correlation-data
 
 - **Tripwire (THE decisive signal)**: realized win-rate **vs average entry price**. If win ≤ price over ~150 trades, no edge → retire. The only judge.
 - **~1:9 asymmetry**: each `SETTLE_LOSS` (−the stake) wipes out ~9 `SETTLE_WIN` (+~0.11/$). A tight cluster of losses = choppy regime, not necessarily a bug.
-- **REAL fees**: the taker fee IS charged on-chain = `0.07 × (1−p) × amount staked` (verified 2026-06-29 on 226 rows, error in the 3rd decimal; = 0.07×p(1−p)×shares). That is 0.35% of the stake at p=0.95, 0.70% at p=0.90, 1.05% at p=0.85. **% of the stake, INDEPENDENT of bet size** (making the bet bigger dilutes nothing). Maker fee = 0. Real break-even ≈ `win > price + ~1 point` (fee + half-spread ~0.5¢). So the "win ≤ price" tripwire must be read as "win ≤ price + 1 pt".
+- **REAL fees**: the taker fee IS charged on-chain = `0.07 × (1−p) × amount staked` (verified 2026-06-29; = 0.07×p(1−p)×shares). That is 0.35% of the stake at p=0.95, 0.70% at p=0.90, 1.05% at p=0.85. **% of the stake, INDEPENDENT of bet size** (making the bet bigger dilutes nothing). Maker fee = 0. Real break-even ≈ `win > price + ~1 point` (fee + half-spread ~0.5¢). So the "win ≤ price" tripwire must be read as "win ≤ price + 1 pt".
 - **z-floor / variants**: `zlead` (z≥1, band 0.85–0.95) vs `zleadn` (band 0.85–0.90, where the premium concentrates) vs `zleadx` (z≥1.5, fewer bets) vs `zleadmk` (maker entry — judge maker fill < mid + adverse selection, not win-rate alone).
-- **15m > 5m, and alts variable**: on real on-chain money, btc-15m & eth-15m are net positive; 5m reprices too fast (live-negative), thin alts often lose. A negative 5m/alt PnL is expected, not a surprise. Split by coin/frame — the aggregate averages winners and losers.
+- **15m > 5m, and alts variable**: in paper trading the 15m runners ended slightly positive overall and the 5m runners clearly negative (the 5m window reprices too fast); thin alts often lose. A negative 5m/alt PnL is expected, not a surprise. Split by coin/frame — the aggregate averages winners and losers.
 
 ## Comparing two variants/configs — ALWAYS go to the end (never stop at the aggregate)
 

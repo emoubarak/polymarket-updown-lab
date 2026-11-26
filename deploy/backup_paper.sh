@@ -36,7 +36,7 @@ echo "$(date -Is) sauvegardé → $OUT ($(du -h "$OUT" | cut -f1)), $(ls -1 "$BA
 # que ce qu'il protège — couvre une régression/reset, PAS la mort de l'hôte. Si $BACKUP_REMOTE
 # est défini (ex. "<user>@autre-hote:~/poly_backups/" ou une cible rsync/bucket-via-rclone),
 # on y pousse la dernière archive ; absent → no-op (rien à configurer pour l'instant). Mettre
-# l'export dans ~/pmlab/.live_env (déjà sourcé par le watchdog) ou la crontab.
+# l'export dans l'environnement du watchdog ou la crontab.
 if [ -n "${BACKUP_REMOTE:-}" ]; then
   if rsync -az --timeout=60 "$OUT" "$BACKUP_REMOTE" 2>/dev/null; then
     echo "$(date -Is) ↗ off-host OK → $BACKUP_REMOTE"

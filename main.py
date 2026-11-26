@@ -13,9 +13,9 @@ import argparse
 from pathlib import Path
 
 # The favorite/zlead family — ONE engine, named Presets (gate params + the entry-slot
-# enter_lo/hi + execution switches) in pmlab/presets.py, so paper, the real
-# pilot AND the dashboard all read the same source. ALL_PRESETS = active + archived
-# (re-runnable); LIVE_STRATEGIES = the armable survivors. Add a strategy = add a Preset.
+# enter_lo/hi + execution switches) in pmlab/presets.py, so paper
+# AND the dashboard all read the same source. ALL_PRESETS = active + archived
+# (re-runnable); LIVE_STRATEGIES = the active survivors. Add a strategy = add a Preset.
 from pmlab.presets import (ALL_PRESETS, add_preset_args, preset_from_args, COIN_KEYS,
                                    bet_max_for, WEIGHT_PCT, START_CAPITAL)
 
@@ -45,7 +45,7 @@ def main() -> None:
                    help=f"starting capital $ (default {START_CAPITAL:.0f})")
     p.add_argument("--stake", type=float, default=25.0,
                    help="flat $ per bet when --no-weighted")
-    # Weighted sizing (default ON, 2026-06-26) — the EXACT pilot model: each bet is
+    # Weighted sizing (default ON, 2026-06-26) — the shared sizing model: each bet is
     # --weight-pct of capital, capped at the coin's book depth --bet-max. --bet-max
     # defaults to COIN_BET_MAX[underlying]. Pass --no-weighted for the old flat clip.
     p.add_argument("--weighted", action=argparse.BooleanOptionalAction, default=True,

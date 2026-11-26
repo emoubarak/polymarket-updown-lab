@@ -82,12 +82,12 @@ for a in sample:
         # a real external taker. Classify std0's role only vs real counterparties.
         if maker==STD0:
             if taker in exch_addrs:
-                roles["maker-mint"]+=1          # our resting order, complement-minted
+                roles["maker-mint"]+=1          # std0 resting order, complement-minted
             else:
-                roles["maker"]+=1               # our resting order taken by someone
+                roles["maker"]+=1               # std0 resting order taken by someone
                 by_side[a.get("side","?")]["maker"]+=1
         if taker==STD0:
-            roles["taker"]+=1                   # WE crossed to take
+            roles["taker"]+=1                   # std0 crossed to take
             by_side[a.get("side","?")]["taker"]+=1
     time.sleep(0.05)
 

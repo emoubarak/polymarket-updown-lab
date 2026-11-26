@@ -1,19 +1,19 @@
 """Two-sided market-making quoter — Flavor A (NO complete-set minting / NO web3).
 
-The cheapest test of the core MM hypothesis: does a CO-LOCATED two-sided maker
-capture spread net-positive — the thing scalp.py failed at, non-colo? We quote a
+The cheapest test of the core MM hypothesis: does a low-latency two-sided maker
+capture spread net-positive — the thing scalp.py failed at? We quote a
 maker BID + ASK on ONE token (the current window's Up token) around fair value,
-acquire inventory via the bid and offload via the ask. Co-located (Dublin) so the
-quotes stay fresh (re-centred on drift). No split/web3/POL needed — if THIS prints
+acquire inventory via the bid and offload via the ask. Quotes are
+re-centred on drift to stay fresh. No split/web3/POL needed — if THIS prints
 money, only then do we invest in complete-set minting (Flavor B) to source inventory
 at $0.50 and scale.
 
-Constraints / honest MVP limits (HARDEN before arming with real size):
+Constraints / honest MVP limits (HARDEN before any live use):
   • Inventory is bounded [0, max_inv] — we never short (can't, without minting).
   • HARD KILL on mark-to-market bleed (cancel everything, stop).
   • Near settle we STOP acquiring and offload via a maker ask; whatever doesn't fill
     holds to settlement (a small directional tail, bounded by max_inv). TODO before
-    arming: a taker-flatten (live.py has no taker SELL yet) + oracle settlement
+    any live use: a taker-flatten (live.py has no taker SELL yet) + oracle settlement
     accounting (reuse feeds.resolve_market) so residual P&L is exact, not mid-marked.
   • Quotes are mid±edge on the penny grid; a competitive maker would JOIN the touch
     (best_bid/best_ask). TODO: touch-relative quoting.

@@ -160,7 +160,7 @@ class Runner:
           decisions.csv  one row per NEW fill with the entry CONTEXT the journal
                        omits (lead_bps, sigma, realized slippage vs the mid) — so
                        losses can later be sliced by soft/strong favorite, and so
-                       live slippage can be checked against the backtest's 2c."""
+                       slippage can be checked against the backtest's 2c."""
         try:
             fav_side = "Up" if ctx.mid_up >= 0.5 else "Down"
             lead_bps = ((ctx.spot - ctx.window_open) / ctx.window_open * 1e4
@@ -207,8 +207,8 @@ class Runner:
     def _resolution(self, start: int, end: int, slug: str | None = None) -> bool | None:
         """Resolve a finished window: True=Up won, False=Down, None=not decided.
 
-        Settle on the REAL Chainlink oracle (what real money and the backtest
-        label both use) so the paper race isn't flattered by the ~3.5% Binance-
+        Settle on the REAL Chainlink oracle (what the market itself settles on and
+        the backtest label uses) so the paper race isn't flattered by the ~3.5% Binance-
         proxy divergence (research/FINDINGS.md §1): the oracle's coarse update
         granularity produces real ties (-> Up) that fine-grained Binance candles
         read as tiny moves (-> Down). The close>=open proxy (tie -> Up, matching

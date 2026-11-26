@@ -71,7 +71,7 @@ def btc_lead_fraction(symbol: str, window_start: int) -> float | None:
     the BTC-align veto (the only signal that survived the deep 90-day OOS backtest: an ALT
     favourite is ~6pt more likely to LOSE when BTC's move opposes it). Returns None for BTC
     itself (no self-veto) or on any data gap — the gate then simply doesn't veto. SHARED by
-    paper (runner._build_ctx) and real (run_live) so the rule can't drift (always-modularize)."""
+    paper (runner._build_ctx), defined once so the rule can't drift (always-modularize)."""
     if symbol == "BTCUSDT":
         return None
     try:
@@ -90,7 +90,7 @@ def longshot_flow(condition_id: str, fav_outcome: str) -> float | None:
     favourite is ~3× more likely to LOSE (deep 90d backtest, alts). The caller divides by the coin's
     depth cap to get a self-normalized ratio. Returns None on failure (gate then doesn't veto).
     Pre-now is automatic: each {coin}-updown-{frame}-{ts} market = ONE window, so its trades are
-    this window only. SHARED by paper + real (always-modularize)."""
+    this window only. Defined once (always-modularize)."""
     try:
         rows = _get(f"{DATA_API}/trades", market=condition_id, limit=1000)
     except requests.RequestException:
@@ -175,7 +175,7 @@ def fetch_updown_market(interval: str, window_start: int,
     outcomes = json.loads(m["outcomes"]) if isinstance(m["outcomes"], str) else m["outcomes"]
     by_outcome = dict(zip(outcomes, tokens))
     # FEE: the 0.07 crypto taker fee IS charged on-chain — re-verified 2026-06-27 from raw tx
-    # receipts (wallet 0xd630…, NEW pUSD relayer 0xe111…). At ENTRY the wallet debits exactly
+    # receipts (NEW pUSD relayer 0xe111…). At ENTRY the trader wallet debits exactly
     # `usdcSize` = size×price + fee in ONE pUSD transfer; the relayer then forwards the fee
     # (= 0.07×p×(1−p)×shares) in pUSD to collector 0x115f48dc — on BOTH 5m AND 15m, never at
     # settlement (redeem returns the full shares×$1). The 2026-06-26 "4/4 zero fee" read was
@@ -200,9 +200,8 @@ def resolve_market(slug: str) -> bool | None:
     """Real settlement of a window: True=Up won, False=Down, None=not yet closed.
 
     Reads the market's own `outcomePrices` (the Chainlink oracle result) — the
-    actual money-settling outcome, NOT the Binance close>open proxy the paper
-    engine uses (the two diverge ~3.7% of windows). For live P&L only the oracle
-    counts."""
+    actual market-settling outcome, NOT the Binance close>open proxy (the two
+    diverge ~3.7% of windows). Only the oracle counts for P&L."""
     events = _get(f"{GAMMA}/events", slug=slug)
     if not events:
         return None
@@ -214,7 +213,7 @@ def resolve_market(slug: str) -> bool | None:
     up = float(dict(zip(outcomes, prices))["Up"])
     # Short (5m/15m) markets keep closed=False / acceptingOrders=True for a long
     # time AFTER the oracle has resolved — but outcomePrices converge to ~1/0 once
-    # settled. The only caller (run_live._settle) invokes this AFTER the window's
+    # settled. Callers (runner._resolution, setarb) invoke this AFTER the window's
     # time has passed (window_end+65), so a DECISIVE price IS the resolution,
     # whatever the lagging `closed` flag says.
     if m.get("closed") or up >= 0.99 or up <= 0.01:

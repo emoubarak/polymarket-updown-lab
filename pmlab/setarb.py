@@ -13,7 +13,7 @@ Mechanics per window:
   • as fills land, track inv_up / inv_down; matched = min(inv_up, inv_down).
   • STOP bidding the heavier side once unmatched >= max_unmatched (cap directional risk).
   • hold everything to settlement: matched sets → +$1 each (vs ~$0.97 paid); unmatched → the
-    real oracle outcome (small, bounded). run_live-style _settle/redeem realizes it.
+    real oracle outcome (small, bounded). _settle_old/redeem realizes it.
 P&L is HONEST: realized only at settlement (no mark-to-mid). Stdlib; broker = live.LiveBroker.
 """
 from __future__ import annotations

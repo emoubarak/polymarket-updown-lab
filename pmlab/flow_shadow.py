@@ -6,7 +6,7 @@ LIVE executed-trade tape per coin/window and logs the running net aggressive flo
 offline we can test whether a flow imbalance at the entry slot predicts the favorite outcome (real
 informed flow) or is just reverse-causal (the buy IS what makes it the favorite). ZERO money.
 
-Run co-located (AWS Dublin):  python3 -m pmlab.flow_shadow
+Run:  python3 -m pmlab.flow_shadow
 """
 from __future__ import annotations
 

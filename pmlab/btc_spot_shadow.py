@@ -2,7 +2,7 @@
 
 doge lead-lag was real but UNcapturable (3c spread ate the 1c lag). BTC-Poly has a TIGHT ~1c spread
 and is the only scalable book. The BTC-native outlier candidate: does the BTC-Poly book LAG the live
-Binance spot by tens/hundreds of ms, leaving a stale quote a 22ms-co-located taker can grab BEFORE
+Binance spot by tens/hundreds of ms, leaving a stale quote a low-latency (~22ms RTT) taker can grab BEFORE
 it reprices — a classic latency arb the tight spread would NOT eat?
 
 Leader = Binance BTC spot (WS bookTicker, real-time). Laggard = BTC up-token book (5m AND 15m),
@@ -10,7 +10,7 @@ polled fast with ms timestamps. ZERO money: pure logging. Offline event-study: w
 does the poly mid follow over the next N ms, and does buying the stale poly ask capture it net of the
 (tight) spread?
 
-Run co-located with .venv-live (has websocket):  .venv-live/bin/python -m pmlab.btc_spot_shadow
+Run with a venv that has websocket-client:  .venv-live/bin/python -m pmlab.btc_spot_shadow
 """
 from __future__ import annotations
 

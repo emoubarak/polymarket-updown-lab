@@ -11,7 +11,7 @@ package main
 //     polymarket_clob.go), plus the strike ("price to beat") from the
 //     crypto-price endpoint.
 //
-// Verified against the live venue 2026-07-01: RTDS pushes ~1 msg/s with the
+// Observed on the public RTDS feed 2026-07-01: RTDS pushes ~1 msg/s with the
 // Chainlink observation; the subscribe snapshot carries ~60s of 1s history
 // (used to pre-warm the vol engine); the strike is NOT in the RTDS feed and
 // comes from polymarket.com/api/crypto/crypto-price (openPrice), which
@@ -36,7 +36,7 @@ import (
 // RTDS Chainlink feed
 // ---------------------------------------------------------------------------
 
-// Exact payload verified live: filters is a JSON-encoded *string*.
+// Exact payload: filters is a JSON-encoded *string*.
 const rtdsSubscribeMsg = `{"action":"subscribe","subscriptions":[{"topic":"crypto_prices_chainlink","type":"*","filters":"{\"symbol\":\"btc/usd\"}"}]}`
 
 var (

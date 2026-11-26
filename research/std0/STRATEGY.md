@@ -32,7 +32,7 @@ The machine, every window (btc-5m = 64% of its volume, then btc-15m 20%, eth/sol
 - **Working capital = MODEST**: std0 mints ~$2,500/window, recovered ~100% at redeem (net-zero round-trip) → capital ~$2,500-5,000, **churned ~288×/day**. You do NOT need $190k, just ~$5k of float + the VOLUME of fills.
 - **Ceiling**: the btc-5m pool ≈ $1,000/day (20% of the market's taker fees); the whole crypto-updown universe ≈ $1,500-2,000/day = std0's level. Replicable up to ~its level; not beyond without new markets.
 
-## The 3 constraints to do it (and where we stand)
-1. **Self-submittable wallet** (mint without quota) → **the Gnosis Safe to deploy** (see ARCHITECTURE). 🔴 missing
-2. **Low latency** (no pickoff on fast 5m) → **the AWS Dublin box (24ms colocation)** + sub-second poll + spot-anchoring. 🟡 to exploit (I had set poll 3s = too slow)
-3. **Capital** (big neutral blocks) → target $500-2500+. 🟡 currently ~$118
+## The 3 constraints to replicate it
+1. **Self-submittable wallet** (mint without relayer quota) → a Gnosis Safe or factory proxy (see ARCHITECTURE).
+2. **Low latency** (no pickoff on fast 5m) → sub-second polling + spot-anchoring. Colocation next to the CLOB would help further but is not permitted from France.
+3. **Capital** (big neutral blocks) → std0 runs $2500 blocks; the 5-share CLOB minimum is negligible only at that scale.

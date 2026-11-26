@@ -1,11 +1,11 @@
 package main
 
 // safe.go — Gnosis Safe v1.3.0 execTransaction encoding for the Polymarket
-// proxy (our funder). Because the transaction is SENT BY the Safe's single
+// proxy (the funder). Because the transaction is SENT BY the Safe's single
 // owner EOA, we use the pre-validated signature form (v=1, r=owner, s=0):
 // the Safe checks msg.sender == r and requires no ECDSA over the SafeTx
-// hash. Verified live layout: our Safe is v1.3.0, threshold 1, owner = our
-// EOA, with all pUSD/CTF approvals already in place.
+// hash. Assumed layout: Safe v1.3.0, threshold 1, owner = the signing EOA,
+// with the pUSD/CTF approvals already granted to the exchange contracts.
 
 import (
 	"context"
@@ -82,7 +82,7 @@ type SafeSplitter struct {
 }
 
 // CtfCollateralAdapterAddr wraps pUSD<->USDC.e around the canonical CTF for
-// the up/down markets (verified from live split transactions).
+// the up/down markets.
 const CtfCollateralAdapterAddr = "0xAdA100Db00Ca00073811820692005400218FcE1f"
 
 // PUSDAddr is Polymarket USD, the V2 collateral.

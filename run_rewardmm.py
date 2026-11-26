@@ -4,8 +4,8 @@
 The income is the maker-rebate on FILLED maker volume near p≈0.5 (0.014·p(1−p) USDC/filled share),
 NOT the spread (≈breakeven) and NOT the Qmin liquidity-rewards (crypto Up/Down isn't in that pool).
 So: post tight two-sided resting maker quotes, get filled, stay neutral, redeem at settle. There is
-NO min-size / max-spread gate (those gamma fields are vestigial for crypto Up/Down). DRY-RUN unless
-armed. On-chain mint/redeem via ~/mint/setops.js + POLY_BUILDER_* in env.
+NO min-size / max-spread gate (those gamma fields are vestigial for crypto Up/Down).
+Dry-run by default; a live mode exists but is disabled unless POLY_LIVE/POLY_CONFIRM are set.
 
     python3 run_rewardmm.py --interval 5m --underlying btc --mint-usd 15 --clip 5 --quote-dist 0.01
 """
@@ -59,7 +59,7 @@ def main():
     if is_armed():
         broker.connect()
         broker.ensure_allowances()
-    mode = "🔴 LIVE (real money)" if is_armed() else "DRY-RUN (disarmed)"
+    mode = "🔴 LIVE (armed)" if is_armed() else "DRY-RUN (disarmed)"
     mm = RewardMM(a, broker, log=log)
 
     # clean stop: cancel resting orders on SIGTERM/SIGINT, else GTD orders keep filling AFTER the kill

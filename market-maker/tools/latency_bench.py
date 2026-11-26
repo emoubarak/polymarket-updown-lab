@@ -5,7 +5,7 @@ Objectif: voir de combien on précède le marché Polymarket avec chaque feed.
 
 Usage: python latency_bench.py <UP_TOKEN> <DOWN_TOKEN> [duree_s]
 Horodatage sur horloge locale (monotonic) → délais relatifs fiables sans sync.
-Latence feed absolue via timestamp exchange (suppose NTP sync du VPS).
+Latence feed absolue via timestamp exchange (suppose une horloge locale synchronisée NTP).
 """
 import asyncio, websockets, json, time, statistics, sys, datetime
 

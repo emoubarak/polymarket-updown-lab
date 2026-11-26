@@ -101,25 +101,25 @@ the relayer.** That is the whole trick.
 
 ---
 
-## What this means for OUR setup (Builder Relayer serialization)
+## Design implications for a replica (Builder Relayer serialization)
 
-Our constraint: the Builder Relayer **serializes on-chain actions per wallet** ("wallet busy: active
+The Builder Relayer **serializes on-chain actions per wallet** ("wallet busy: active
 action exists", ~5–10 s each). std0 shows that constraint only bites if you route **mints** through
-the relayer — and **std0 doesn't**. Concrete recommendations, in priority order:
+the relayer — and **std0 doesn't**. Concrete design points, in priority order:
 
 1. **Mint via direct EOA txs with self-managed nonces — bypass the relayer for splits.**
-   Fund our signer EOA with POL, build `proxy([splitPosition(...)])` calldata, and send txs
-   `eth_sendRawTransaction` ourselves, incrementing nonce **without waiting for the previous receipt**
+   The signer EOA holds POL for gas, builds `proxy([splitPosition(...)])` calldata, and sends txs
+   `eth_sendRawTransaction` itself, incrementing the nonce **without waiting for the previous receipt**
    (pipeline). This is exactly std0's pattern and removes the 5–10 s/action wall. Expected throughput
-   **~1 mint per 2 s block (~30/min) per wallet** — far above the ~5/window we actually need.
-   - Overpay priority fee (~200–300 gwei like std0) so the mint lands in 1–2 blocks before the
+   **~1 mint per 2 s block (~30/min) per wallet** — far above the ~5/window actually needed.
+   - Overpay the priority fee (~200–300 gwei like std0) so the mint lands in 1–2 blocks before the
      window price drifts. Cost is ~$0.008/mint — negligible.
 
 2. **Don't batch multiple splits per tx** (std0 doesn't, and it's unnecessary). Nonce pipelining is
    simpler and already gives block-rate throughput. Keep `proxy()` = one `splitPosition` per tx so
    each mint can be retried/replaced independently.
 
-3. **Sells are not a relayer problem at all.** Post resting two-sided maker orders to the **CLOB REST
+3. **Sells are not a relayer problem at all.** Resting two-sided maker orders go to the **CLOB REST
    API** (off-chain EIP-712 signatures) — gasless, settled by the operator, limited only by API rate.
    The "wallet busy" lock does **not** apply to off-chain order placement. Build inventory first
    (mint), then place orders; don't try to atomically mint-and-sell.
@@ -129,11 +129,11 @@ the relayer — and **std0 doesn't**. Concrete recommendations, in priority orde
    per settled condition; don't block the loop on it.
 
 5. **Only fall back to multiple wallets if mint demand exceeds ~30/min** (it won't at the std0 scale:
-   ~36 splits/h). A single self-submitting EOA already matches std0's full tempo. If we ever need
-   genuinely concurrent same-instant mints across many coins, multiple EOAs sidestep the
-   single-sender nonce ordering — but that's a scale we're nowhere near.
+   ~36 splits/h). A single self-submitting EOA already matches std0's full tempo. Genuinely concurrent
+   same-instant mints across many coins would need multiple EOAs to sidestep the single-sender nonce
+   ordering — a scale std0 itself does not need.
 
-**Bottom line:** match std0 by (a) **self-submitting splitPosition from our own funded EOA with
+**Bottom line:** match std0 by (a) **self-submitting splitPosition from the signer EOA with
 pipelined nonces** (not the Builder Relayer), (b) **placing sells as off-chain CLOB maker orders**,
 (c) **letting redeems batch async**. The relayer serialization becomes irrelevant because the only
 latency-critical on-chain action — the mint — never touches the relayer.

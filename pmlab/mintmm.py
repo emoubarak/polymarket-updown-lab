@@ -2,7 +2,7 @@
 
 Replicates the reference wallet 0xdf79… (see research/std0_ops.md + std0_strategy.md):
   1. MINT a batch of complete sets EARLY in a window (split $X pUSD -> X Up + X Down) via the
-     Builder Relayer (node setops.js — gasless after the one POL-funded EOA approval).
+     Builder Relayer (node setops.js, gasless).
   2. Post RESTING two-sided maker SELLS on BOTH Up and Down at a premium (mid + edge) — the
      overround/favorite-longshot skew. Off-chain CLOB orders (gasless, NOT relayer-serialized).
   3. Let them fill GRADUALLY over the window (std0 sells 0% in the first 60s — it does NOT dump);
@@ -12,7 +12,7 @@ Replicates the reference wallet 0xdf79… (see research/std0_ops.md + std0_strat
 
 Profit per set fully sold ≈ (ask_up + ask_dn) − $1 = (mid_up+mid_dn − 1) + 2·edge, i.e. the spread/
 overround we add on top of the mids. Unsold sets recover $1 (breakeven). HONEST accounting: cost =
-$ minted, proceeds = $ from sells + merges + redeems; P&L = proceeds − cost, reconciled to the wallet.
+$ minted, proceeds = $ from sells + merges + redeems; P&L = proceeds − cost, reconciled on-chain.
 
 On-chain ops (mint/merge/redeem) go through node `~/mint/setops.js` (relayer). CLOB sells/cancels go
 through live.LiveBroker (place_sell/cancel/order_fill). Stdlib + subprocess.

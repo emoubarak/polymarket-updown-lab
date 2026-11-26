@@ -11,7 +11,7 @@ lags 0..60s (does laggard(t) track leader(t−Δ)?), and (b) whether a real-time
 DISAGREEMENT is followed by the laggard catching up within seconds (= a capturable lag) or not
 (= tape artifact). Resolution is via the oracle at check-time, so this runs for days unattended.
 
-Run on the co-located box (AWS Dublin, ~22ms /book):  python3 -m pmlab.leadlag_shadow
+Run (a low-latency host helps, ~22ms /book):  python3 -m pmlab.leadlag_shadow
 """
 from __future__ import annotations
 

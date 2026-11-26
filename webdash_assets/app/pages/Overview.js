@@ -1,5 +1,5 @@
-// Command center — the single screen that answers "how's it going, is anything
-// real, where's the real money": KPIs → sortable leaderboard → equity → activity.
+// Command center — the single screen that answers "how's it going, is any edge
+// real": KPIs → sortable leaderboard → equity → activity.
 import { html, useState } from '../preact.js';
 import { CONFIG, bkOf, gatedBk } from '../api.js';
 import { glyphOf, nameOf, partsOf, isMakerName, takerTwin, verdict, health, simPnL, moneyS, money, pct, signCls, ageStr, dirLabel, COLORS, effectiveSlot, betMax, effStake, fmt0 } from '../format.js';
@@ -15,8 +15,8 @@ let SAVED = {coin:"all", brain:"all", frame:"all"};
 // by the n≥150 verdict threshold (150/200 = 75% live).
 const SHRINK_K = 50;
 
-// `all` (/all) and `pilot` (/pilot-data) are polled once in App and shared.
-export function Overview({all, pilot, go}){
+// `all` (/all) is polled once in App and shared.
+export function Overview({all, go}){
   // Trial-table filters — coin / strat / frame; we segment by token,
   // brain and window (the race scales with the breadth extension).
   const [fCoin, setFC] = useState(SAVED.coin);
@@ -78,14 +78,6 @@ export function Overview({all, pilot, go}){
   const proven = rows.filter(r=>r.v.key==="proven").length;
   const best = rows.filter(r=>r.m.n_settled).sort((a,b)=>(b.m.ev_live||-9)-(a.m.ev_live||-9))[0];
 
-  // real-money pilot KPI
-  const pl = pilot || {};
-  const plMode = !pl.alive ? "stopped" : pl.status?.mode==="live" ? "🔴 live armed" : "trial (dry-run)";
-  const plCfg = pl.status?.config;
-  const plSub = pl.alive && plCfg
-    ? `${plCfg.strategy} ${String(plCfg.underlying||"btc").toUpperCase()} ${plCfg.interval} · ${pl.n_trades||0} bets`
-    : "not armed — see The pilot";
-
   // distinct filter values present in the lineup (order = lineup order, deduped)
   const coins  = [...new Set(rows.map(r=>partsOf(r.n).token).filter(Boolean))];
   const brains = [...new Set(rows.map(r=>partsOf(r.n).brain).filter(Boolean))];
@@ -120,7 +112,7 @@ export function Overview({all, pilot, go}){
       cell:r=>html`<span class="cell-name"><span class="g">${glyphOf(r.n)}</span><span class="lead">${nameOf(r.n)}</span></span>`},
     {key:"verdict", label:"Verdict", sortable:true, get:r=>({wait:0,none:1,trial:2,proven:3}[r.v.key]),
       cell:r=>html`<${Seal} v=${r.v} />`},
-    {key:"live", label:"Live P&L", sortable:true, get:r=>r.live, title:"Realized live P&L · paper money (≠ real pilot)",
+    {key:"live", label:"Live P&L", sortable:true, get:r=>r.live, title:"Realized live P&L · paper money",
       cell:r=>html`<${Money} v=${r.live} signed=${true} />`},
     {key:"ev", label:"Real edge/$", sortable:true, get:r=>r.m.ev_live||0, title:"Realized live EV/$ (paper money)",
       cell:r=>r.m.n_settled
@@ -177,9 +169,6 @@ export function Overview({all, pilot, go}){
     </div>
 
     <div class="kpis">
-      <${Kpi} real=${true} k="Pilot — real money" glyph="⚗"
-        v=${html`<span class=${signCls(pl.realized_pnl||0)}>${moneyS(pl.realized_pnl||0)}</span>`}
-        sub=${plMode + " · " + plSub} />
       <${Kpi} accent="gold" k="Race — live (paper)" glyph="🜍"
         v=${html`<span class=${signCls(totLive)}>${moneyS(totLive)}</span>`}
         sub=${`${CONFIG.STRATS.length} strategies · ${totN} settled bets · paper money`} />
@@ -221,6 +210,5 @@ export function Overview({all, pilot, go}){
     </${Panel}>
 
     <${Note}>⚠ All ${CONFIG.STRATS.length} strategies bet the <b>same favorites</b>: this is ONE
-      parameterized edge, not ${CONFIG.STRATS.length} independent ones — a bad regime hits them together.
-      For real money, we pick one; we don't "diversify" across them.</${Note}>`;
+      parameterized edge, not ${CONFIG.STRATS.length} independent ones — a bad regime hits them together.</${Note}>`;
 }

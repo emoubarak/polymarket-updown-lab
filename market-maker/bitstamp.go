@@ -3,8 +3,9 @@ package main
 // bitstamp.go — Bitstamp BTC/USD live order book ingestion.
 //
 // Bitstamp is the FASTEST leading signal available to us: co-located in AWS
-// eu-central-1 (Frankfurt), its `order_book_btcusd` channel delivers at ~4-10ms
-// from a Frankfurt VPS (vs ~50ms Coinbase, ~118ms Binance Tokyo). It is also
+// eu-central-1 (Frankfurt), its `order_book_btcusd` channel delivers at
+// ~4-10ms when measured from Frankfurt (vs ~50ms Coinbase, ~118ms Binance
+// Tokyo). It is also
 // historically a Chainlink BTC/USD source — i.e. close to the Polymarket
 // settlement anchor. Like Binance it is a leading signal, never the settlement
 // oracle itself.

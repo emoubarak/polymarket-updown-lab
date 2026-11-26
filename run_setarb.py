@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the delta-neutral complete-set ARB (pmlab.setarb.SetArb).
 Buys cheap complete sets on the CLOB (maker bids on Up+Down summing < $1) → each matched
-pair settles for a guaranteed $1, market-neutral. DRY-RUN unless armed (same as run_live).
+pair settles for a guaranteed $1, market-neutral. Dry-run by default; a live mode exists but is disabled unless POLY_LIVE/POLY_CONFIRM are set.
 
     python3 run_setarb.py --interval 5m --underlying btc --edge 0.015 --set-usd 10 --max-unmatched 8
 """
@@ -40,7 +40,7 @@ def main():
     if is_armed():
         broker.connect()
         broker.ensure_allowances()
-    mode = "🔴 LIVE (real money)" if is_armed() else "DRY-RUN (disarmed)"
+    mode = "🔴 LIVE (armed)" if is_armed() else "DRY-RUN (disarmed)"
     sa = SetArb(a, broker, log=log)
     log(f"set-arb up — {mode} | edge={a.edge} set=${a.set_usd} max_unmatched={a.max_unmatched} | {sa.status()}")
 

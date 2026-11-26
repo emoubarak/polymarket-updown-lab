@@ -30,7 +30,7 @@ export const getJSON = u => fetch(u).then(r => {
 // fetch `url`, then re-fetch every `ms`. Re-subscribes when url/ms change (e.g.
 // switching strategy tab → /data?strat=X). Returns {data, error, loading, updatedAt}.
 //
-// Hardened for a live-money dashboard left open for hours:
+// Hardened for a dashboard left open for hours:
 //  • PAUSE when the tab is hidden (no point hammering /all in a background tab) —
 //    resume + immediate fetch on visibilitychange / reconnect.
 //  • EXPONENTIAL BACKOFF on error (a dead server isn't re-tapped every 10 s).
@@ -75,19 +75,6 @@ export function useNow(ms = 2000){
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), ms);
     return () => clearInterval(id); }, [ms]);
   return now;
-}
-
-export async function postPilot(body){
-  const r = await fetch("/pilot", {method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"}, body});
-  return r.json();
-}
-
-// rewards-MM control plane (separate registry/endpoint from the zlead pilots).
-export async function postMM(body){
-  const r = await fetch("/mm", {method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"}, body});
-  return r.json();
 }
 
 // Best backtest match for a deployed runner name, most- to least-specific:

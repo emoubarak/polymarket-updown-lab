@@ -14,7 +14,7 @@ $100×10 %), so the original fill price still holds at the new size.
 Windows never overlap (zlead holds <=1 position to settlement), so we replay them
 chronologically, compounding a bankroll from START_CAPITAL: at each window the new
 stake is staking.weighted_clip(bankroll, WEIGHT_PCT, COIN_BET_MAX[coin]) — the SAME
-helper the real pilot and the live paper engine use.
+helper the paper engine uses.
 
 Size-invariant metrics (win-rate, avg price, EV/$) are UNCHANGED; only the dollars
 move. Rewrites journal.csv, equity.csv and state.json in place; keeps a one-time
@@ -39,7 +39,7 @@ from pmlab.staking import weighted_clip
 
 ENTRY_KINDS = ("BUY", "BUY+", "FILL_BUY")          # taker / top-up / maker fill
 CLOSE_KINDS = ("SETTLE_WIN", "SETTLE_LOSS")        # window resolution (zlead never sells)
-NON_CRYPTO = ("state_events", "state_copy", "live_state")
+NON_CRYPTO = ("state_events", "state_copy")
 
 
 def base_kind(kind: str) -> str:

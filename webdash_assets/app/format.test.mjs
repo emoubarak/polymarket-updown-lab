@@ -57,7 +57,7 @@ t('verdict wait/trial/proven/none', () => {
   assert.equal(verdict(null).key, 'wait');
 });
 
-// --- real-money GO lamp (Wilson lower bound) ---
+// --- edge-confirmation lamp (Wilson lower bound) ---
 t('goLamp colours', () => {
   const red = 'var(--vermilion)', amber = 'var(--amber)', green = 'var(--verdigris)';
   assert.equal(goLamp(null).c, 'var(--ink-3)');

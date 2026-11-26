@@ -1,7 +1,7 @@
 # zlead — harvesting the longshot premium, but only when the lead is established
 
-*Explanatory document, June 2026. Paper trading (plus an optional real-money pilot, disarmed by
-default): everything is wired read-only to the real APIs.*
+*Explanatory document, June 2026. Paper trading: everything is wired read-only to the public
+APIs.*
 
 > **Lineage note.** This document (formerly `STRATEGIE-RUBEDO.md`) keeps references to the
 > historical codenames of falsified strategies — see the **codename glossary** at the top of
@@ -61,8 +61,8 @@ over to the other cryptos (whereas the raw *bps* version only held on BTC).
 ## 3. The strategy: `zlead`
 
 A single engine (`engine.Engine`, `pmlab/engine.py`), parameterized by a `Preset`
-(`pmlab/presets.py`). The same entry rule (`pmlab/entry.EntryGate`) is **shared** between
-paper and the real pilot — no drift possible between the two paths.
+(`pmlab/presets.py`). The entry rule lives in one place (`pmlab/entry.EntryGate`), so no
+code path can drift from it.
 
 The rule, brutally simple:
 
@@ -143,10 +143,10 @@ The protocol, disciplined:
 
 ## 6. The results — honestly
 
-The **15m** (especially BTC and ETH) is the core **validated in real forward-testing**: net
-positive after real costs (`fee = 0` + half-spread). The **5m** is backtest flattery — the
-ground-truth tape shows the favorite has already converged by the time we could enter, and the
-frame reprices too fast; it runs in paper as falsification, expected flat to negative.
+The **15m** is the core: the last paper run ended slightly positive on 15-minute windows
+(+$55 cumulative over 36 runners). The **5m** is backtest flattery — the ground-truth tape
+shows the favorite has already converged by the time we could enter, and the frame reprices
+too fast; it ran in paper as a falsification and ended clearly negative (−$520 over 39 runners).
 
 *We do not reproduce a numeric EV table here: the magnitudes per (variant, coin, frame) move
 with regime and sample. The live numbers are on the dashboard; the detailed falsification
@@ -166,9 +166,9 @@ then bare rubedo, died.)
   the favorite wins *exactly* at its price as soon as you leave a trending regime.
   `citrinitas`'s volatility filter *seemed* to add edge in-sample but did not hold. `fixatio`'s
   *bps* floor did not transfer beyond BTC. Kept **constructible** in `presets._ARCHIVE` (to
-  replay their backtests), **never deployed nor armable**.
+  replay their backtests), **never deployed**.
 - **5m**: favorite-longshot largely arbitraged away on the fast frame; backtest flattery
-  (deployed as a live falsification).
+  (run in paper as a falsification).
 - **4h**: no favorite edge. Over 4h the underlying has time to reverse → a 0.85 favorite wins
   ~0.85 (efficient). The 15m edge comes precisely from the short window *locking in* the lead.
 - **1h / 30m**: do not exist as markets.

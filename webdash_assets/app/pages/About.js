@@ -50,7 +50,7 @@ function StratCard({brain, coins, frames}){
 }
 
 // Book capacity: the max absorbable stake per coin AND per frame (depth on the
-// favorite's ask between 0.85 and 0.95), which caps EVERY bet (paper AND real pilot).
+// favorite's ask between 0.85 and 0.95), which caps EVERY paper bet.
 // Read from /config (COIN_DEPTH = {coin:{frame:$}}). 5m and 15m = separate books.
 function CapacityTable(){
   const depth = CONFIG.COIN_DEPTH || {};
@@ -71,8 +71,8 @@ function CapacityTable(){
           buying too</i>. Measured <b>per market</b> (5m and 15m = separate books) as the median of the
           <b>largest single wallet</b> per window — not the aggregate flow, which is shared among 9 to
           185 simultaneous buyers (we capture only ~15–35% of it on liquid coins). Source:
-          trade history, <code>tools/measure_capacity.py</code>. Paper AND the real pilot
-          use this cap.</p>
+          trade history, <code>tools/measure_capacity.py</code>. Every paper runner
+          uses this cap.</p>
         <table class="tbl">
           <thead><tr><th>Coin</th>${frames.map(f => html`<th>Max stake ${f}</th>`)}</tr></thead>
           <tbody>
@@ -116,8 +116,7 @@ export function About(){
       <p><b>Two truths, two colors.</b> <span class="gold">Gold</span> = we made money.
         <span class="verd">Verdigris</span> = the edge is statistically proven. A strategy can
         be in the green without being proven (luck), or proven while momentarily in the red.</p>
-      <p class="mut">Everything is read-only on the real APIs. Paper trading sends no orders.
-        Only <b>The pilot</b> can touch real money, and only once explicitly armed.</p>
+      <p class="mut">Everything is read-only on the public APIs. Paper trading sends no orders.</p>
     </div></section>
 
     <${CapacityTable} />

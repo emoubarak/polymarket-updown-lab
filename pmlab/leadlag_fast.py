@@ -2,11 +2,11 @@
 
 The 2s logger (leadlag_shadow) showed cross-corr peaking at lag=0 → no lag >2s. But a real
 sub-second lag (doge follows btc in 200-800ms) would also appear at lag=0 at 2s resolution, and
-WOULD be capturable co-located (22ms RTT). This polls btc + doge favorite books as fast as the API
+WOULD be capturable at low latency (~22ms RTT). This polls btc + doge favorite books as fast as the API
 allows (~6/s, ~167ms resolution), with millisecond timestamps, to resolve sub-second lead-lag.
 ZERO money: pure logging. Focused on the strongest tape pair (btc leader → doge laggard).
 
-Run co-located (AWS Dublin):  python3 -m pmlab.leadlag_fast
+Run:  python3 -m pmlab.leadlag_fast
 """
 from __future__ import annotations
 

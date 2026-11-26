@@ -261,7 +261,7 @@ func (c *ClobClient) BuildOrder(tokenID string, side uint8, priceMicro, sizeMicr
 	if priceMicro <= 0 || priceMicro >= Micro || sizeMicro <= 0 {
 		return nil, fmt.Errorf("bad order params price=%d size=%d", priceMicro, sizeMicro)
 	}
-	// Venue precision rules (verified live): share sizes max 2 decimals;
+	// Venue precision rules: share sizes max 2 decimals;
 	// the derived USDC amount max 4 decimals. With price on a 0.01 tick and
 	// size at 2 decimals the product is always ≤4 decimals.
 	if sizeMicro%10_000 != 0 {
@@ -416,7 +416,7 @@ func (c *ClobClient) GetOpenOrders(ctx context.Context, conditionID string) ([]O
 
 // UpdateBalanceAllowance asks the venue to refresh its cached balance for a
 // conditional token — required after buy fills before the shares can back a
-// SELL order (verified live: sells reject with "balance: 0" otherwise).
+// SELL order (sells are rejected with "balance: 0" otherwise).
 func (c *ClobClient) UpdateBalanceAllowance(ctx context.Context, tokenID string, sigType int) error {
 	path := fmt.Sprintf("/balance-allowance/update?asset_type=CONDITIONAL&token_id=%s&signature_type=%d", tokenID, sigType)
 	return c.doL2(ctx, http.MethodGet, path, nil, nil)

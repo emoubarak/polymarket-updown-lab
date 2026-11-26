@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Run the std0-style complete-set market-maker (pmlab.mintmm.MintMM).
-Mint sets -> rest two-sided maker SELLS at a premium -> recover leftovers. DRY-RUN unless armed
-(POLY_LIVE=1 POLY_CONFIRM=I_UNDERSTAND_REAL_MONEY POLY_PRIVATE_KEY + builder creds). On-chain ops
-(mint/merge/redeem) need ~/mint/setops.js + POLY_BUILDER_* in env.
+Mint sets -> rest two-sided maker SELLS at a premium -> recover leftovers. Dry-run by default; a live mode exists but is disabled unless POLY_LIVE/POLY_CONFIRM are set.
+The on-chain ops (mint/merge/redeem) are only used in that disabled live mode.
 
     python3 run_mintmm.py --interval 5m --underlying btc --mint-usd 8 --sell-edge 0.015
 """
@@ -46,7 +45,7 @@ def main():
     if is_armed():
         broker.connect()
         broker.ensure_allowances()
-    mode = "🔴 LIVE (real money)" if is_armed() else "DRY-RUN (disarmed)"
+    mode = "🔴 LIVE (armed)" if is_armed() else "DRY-RUN (disarmed)"
     mm = MintMM(a, broker, log=log)
     log(f"mint-MM up — {mode} | mint=${a.mint_usd} edge={a.sell_edge} | {mm.status()}")
 

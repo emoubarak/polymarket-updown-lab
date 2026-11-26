@@ -1,8 +1,8 @@
 """What predicts a LOSS? Deep-cache loss-rate by feature, to find GUARDRAILS.
 
-Discipline (the trap to avoid — see memory untested-signals): the real-money loss
-sample is tiny (~55), so DISCOVERY runs on the deep cache (thousands of windows,
-research/data) where loss-rate buckets have power; the real losses only CONFIRM.
+Discipline (the trap to avoid — see memory untested-signals): the sample of observed
+losses outside the cache is tiny, so DISCOVERY runs on the deep cache (thousands of windows,
+research/data) where loss-rate buckets have power.
 
 A guardrail must cut windows that are BOTH high-loss AND low/neg-EDGE — cutting a
 high-loss bucket that is still +EV (a cheap favorite whose price already pays for the

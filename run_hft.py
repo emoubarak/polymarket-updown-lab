@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Run the std0-competitive HFT maker (pmlab.hftmm.HftMM) — WebSocket-driven, co-located.
+"""Run the std0-competitive HFT maker (pmlab.hftmm.HftMM) — WebSocket-driven.
 
 Market book + Binance spot + our fills all over WS → re-price the instant spot moves (it leads the
 lagging CLOB), before the taker can hit our stale quote. The poll-1s rewardmm bot couldn't; this can.
-DRY-RUN unless armed. On-chain mint/sync via MINT_JS=~/mint/safeops.js (Safe self-submit).
+Dry-run by default; a live mode exists but is disabled unless POLY_LIVE/POLY_CONFIRM are set.
 
-    MINT_JS=~/mint/safeops.js  + source .poly_env_bbe3 + POLY_LIVE=1 \
     python3 run_hft.py --interval 5m --underlying eth --mint-usd 100 --clip 5
 """
 from __future__ import annotations
@@ -48,13 +47,13 @@ def main():
     broker = LiveBroker(log=log)
     if is_armed():
         broker.connect(); broker.ensure_allowances()
-    mode = "🔴 LIVE (real money)" if is_armed() else "DRY-RUN (disarmed)"
-    # PRE-FLIGHT self-check — refuse to arm real money on a misconfig (clip<5, mint>pUSD, bad band, …)
+    mode = "🔴 LIVE (armed)" if is_armed() else "DRY-RUN (disarmed)"
+    # PRE-FLIGHT self-check — refuse to arm on a misconfig (clip<5, mint>pUSD, bad band, …)
     from pmlab import mm_guard
     pusd = (broker.usdc_balance() if is_armed() else 1e9)
     ok, _fails = mm_guard.preflight(a, pusd, is_armed(), log=log)
     if is_armed() and not ok:
-        log("🛑 PRE-FLIGHT FAILED — refusing to arm real money. Fix the config above."); raise SystemExit(1)
+        log("🛑 PRE-FLIGHT FAILED — refusing to arm. Fix the config above."); raise SystemExit(1)
     mm = hftmm.HftMM(a, broker, log=log)
     mm.sym = feeds.SYMBOL.get(a.underlying, "BTCUSDT")
     creds = broker._client.creds if is_armed() else None

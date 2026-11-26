@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-"""Maker fill-quality analyzer — THE falsification instrument for the co-located
-maker-entry experiment (mm-colocation-probe).
+"""Maker fill-quality analyzer — a generic journal analyzer for maker-entry variants.
 
-Reads one or more run_live journal.csv files and, per resolved window, classifies
+Reads one or more runner journal.csv files (paper state dirs) and, per resolved window, classifies
 the entry as MAKER-filled (FILL_BUY) vs TAKER (BUY / fallback / direct) and joins
 the settlement (SETTLE_WIN/LOSS). It then contrasts the two populations on the
-metrics that decide whether a co-located resting bid is ADVERSELY selected:
+metrics that decide whether a resting bid is ADVERSELY selected:
 
   fill-rate      #FILL_BUY / #REST_BUY        (did the resting bid actually fill?)
   win-rate       maker-filled vs taker        (adverse selection = maker << taker)
-  entry price    maker fill vs taker price     (the half-spread we hoped to save)
+  entry price    maker fill vs taker price     (the half-spread a maker entry hopes to save)
   net $/window   maker vs taker
 
 The structural trap this measures: a STATIC bid at the favorite fills preferentially
 when the favorite WEAKENS (price falls to the bid) → lower win-rate than the taker
-that chases the runaways. Re-centering (only possible co-located) should lift the
+that chases the runaways. Re-centering (it needs low latency) should lift the
 maker win-rate toward the taker baseline by converting directional-adverse fills into
-spread-capture fills. This tool is how we read that.
+spread-capture fills. This tool is how that is read.
 
 Usage:
   python3 tools/maker_fill_quality.py state_mk_eth_15m [state_mk_btc_15m ...]
@@ -106,7 +105,7 @@ def report(by_win: dict) -> None:
         dwr = m["winrate"] - t["winrate"]
         print(f"\nADVERSE-SELECTION read: maker winrate − taker winrate = {dwr:+.1%}")
         print("  (strongly negative = maker fills are the weakening favorites = adverse;"
-              "\n   near-zero or positive = co-located re-centering is converting fills to spread capture)")
+              "\n   near-zero or positive = re-centering is converting fills to spread capture)")
         if m["avg_px"] and t["avg_px"]:
             print(f"  entry-price edge: maker {m['avg_px']:.3f} vs taker {t['avg_px']:.3f} "
                   f"= {(t['avg_px']-m['avg_px'])*100:+.2f}c saved/share (the half-spread thesis)")

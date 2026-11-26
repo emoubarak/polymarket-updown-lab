@@ -4,8 +4,8 @@ package main
 // key and funder come exclusively from the environment (POLY_PRIVATE_KEY,
 // POLY_FUNDER, POLY_SIG_TYPE — matching the venue's conventional names).
 //
-// DRY-RUN IS THE DEFAULT. Live trading requires BOTH the --live flag and
-// REBATE_LIVE=yes in the environment (belt and suspenders).
+// DRY-RUN IS THE DEFAULT. A live order mode exists in code but is disabled:
+// it needs both a CLI flag and an explicit environment confirmation.
 
 import (
 	"fmt"
@@ -65,8 +65,8 @@ type Config struct {
 
 	// MarkoutGate: adaptive adverse-selection gate. When the EWMA of realized
 	// per-share markout drops below −MarkoutGate, suspend quoting (we're being
-	// picked off) until it recovers. 0 = disabled. Analysis: losing windows
-	// avg markout −0.44/share, winning +0.21 — the discriminant.
+	// picked off) until it recovers. 0 = disabled. Markout is the signal that
+	// separates windows with adverse selection from the others.
 	MarkoutGate float64
 
 	// FillCooldown: after a maker fill on a side, that side may not
@@ -81,8 +81,8 @@ type Config struct {
 	// Strategy is the named regime; it sets the flags below to a coherent
 	// profile so the two capital regimes stay cleanly separated:
 	//
-	//   "sellonly"  — SMALL capital (std0's early method, verified
-	//                 profitable at ~$100-150): split pairs, distribute
+	//   "sellonly"  — SMALL capital (std0's early method, read from its
+	//                 public activity at ~$100 capital): split pairs, distribute
 	//                 both sides as passive asks, NEVER bid, no taker.
 	//                 Avoids the adverse selection that bids/taker incur.
 	//   "momentum"  — LARGE capital (std0's scaled method): maker both
@@ -95,8 +95,7 @@ type Config struct {
 	// MomentumMode: lean into the trend + taker re-buy (set by "momentum").
 	MomentumMode bool
 	// SellOnly: never bid; only distribute split pairs as asks (set by
-	// "sellonly"). The single change that flips small-capital MM from
-	// loss-making (bids adverse-selected) to profitable.
+	// "sellonly"). Avoids the adverse selection that bids incur.
 	SellOnly bool
 
 	// LadderLevels: paper only — rest this many rungs per side, one tick
@@ -106,12 +105,13 @@ type Config struct {
 
 	// PaperSlipTicks: paper only — model taker execution slippage (we cross
 	// AFTER the move) as this many ticks added to the touch price, on top of
-	// the known taker fee. The instantaneous-touch fill produced a +12 vs
-	// −14 mirage; this is the honest (if estimated) cost of chasing.
+	// the known taker fee. An instantaneous-touch fill would overstate the
+	// simulated result; this is an estimated cost of chasing.
 	PaperSlipTicks float64
 
 	// Endgame flattening: residual inventory riding into settlement is the
-	// dominant loss channel (markouts positive, window P&L negative).
+	// dominant loss channel (fills can mark out positive while the window
+	// settles negative).
 	FlattenT1 float64 // T below which no NEW exposure may be opened (s)
 	FlattenT2 float64 // T below which |net| >= venue-min is force-flattened (s); 0 disables (carry pairs, never pay the exit spread)
 
@@ -167,7 +167,8 @@ func envInt(key string, def int) (int, error) {
 	return i, nil
 }
 
-// LoadConfig reads the environment. liveFlag is the --live CLI flag.
+// LoadConfig reads the environment. liveFlag is the CLI flag of the live
+// mode, which stays off by default.
 func LoadConfig(liveFlag bool) (*Config, error) {
 	return loadConfig(liveFlag, false)
 }
@@ -323,7 +324,7 @@ func loadConfig(liveFlag, paper bool) (*Config, error) {
 		MaxHeartbeatFails:   3,  // ~15s: venue is auto-cancelling us anyway
 	}
 
-	// Live gating: flag AND env must agree. Paper never touches funds.
+	// Live gating: flag AND env must agree. Paper never places orders.
 	cfg.Paper = paper
 	envLive := os.Getenv("REBATE_LIVE") == "yes"
 	cfg.Live = liveFlag && envLive && !paper

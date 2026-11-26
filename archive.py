@@ -70,7 +70,7 @@ def main() -> None:
     a = p.parse_args()
     # Default = AUTO-DISCOVER the actual paper states on disk (state_zlead_btc -> zlead-btc).
     # The old hardcoded DEFAULT_STRATS pointed at long-retired dirs, so a bare `archive.py`
-    # silently archived NOTHING (and a reset after it lost the real data — a paid lesson).
+    # silently archived NOTHING (and a reset after it lost the real paper data).
     if a.strat:
         strats = dict(s.split(":") for s in a.strat)
     else:

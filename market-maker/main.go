@@ -8,7 +8,7 @@ package main
 // Single event-loop goroutine owns all strategy state (no locks on the
 // decision path). Feeds, heartbeat, user WS and order I/O run on their own
 // goroutines and communicate via channels/atomics. Dry-run is the default;
-// live order flow requires --live AND REBATE_LIVE=yes.
+// a live order mode exists in code but is disabled.
 
 import (
 	"context"
@@ -463,8 +463,9 @@ func (b *Bot) step(ctx context.Context, now time.Time) {
 	// Binance (~118ms Tokyo) whenever it is fresher, falling back to Binance if
 	// Bitstamp is stale or disabled. From here sBn/tsBn/bnAge carry the chosen
 	// fast feed — every downstream use (vol, basis, oracle prediction) benefits
-	// from the lower latency. Measured: Bitstamp gives ~108ms more anticipation
-	// on each BTC move vs Binance from a Frankfurt VPS (see docs/LATENCY_FRANKFURT).
+	// from the lower latency. Bitstamp gives ~108ms more anticipation on each
+	// BTC move vs Binance, measured from a Frankfurt host (see
+	// docs/LATENCY_FRANKFURT.md).
 	if b.bs != nil {
 		if sBs, tsBs := b.bs.Feed.Load(); sBs > 0 {
 			if bsAge := b.bs.Feed.AgeSec(nowN); bsAge < bnAge || bnAge >= 2 {
@@ -555,9 +556,9 @@ func (b *Bot) step(ctx context.Context, now time.Time) {
 		q.AskOK = false
 	}
 
-	// Drift brake: never lean against strong short-horizon momentum. The
-	// −$7 window came from reloading top-of-book bids down a persistent
-	// move — fills looked fine at t+10s (markout +0.56) and bled to expiry.
+	// Drift brake: never lean against strong short-horizon momentum.
+	// Reloading top-of-book bids down a persistent move can look fine at
+	// t+10s (positive markout) and still lose into expiry.
 	// MomentumMode (std0 replication) HOLDS through moves instead: churn
 	// forfeits queue position, which is what caps our fill volume.
 	if !b.cfg.MomentumMode && !b.cfg.SellOnly && b.cfg.DriftZMax > 0 && sBn > 0 {
@@ -590,8 +591,8 @@ func (b *Bot) step(ctx context.Context, now time.Time) {
 			sizeMicro := int64(b.cfg.QuoteSize * float64(Micro))
 			// Realistic taker cost: fee 0.07·p·(1-p)/share PLUS slippage
 			// (we cross AFTER the move — model as PaperSlipTicks of the
-			// touch price). Both raise the effective purchase price; the
-			// pure-touch fill was the source of the +12 vs −14 mirage.
+			// touch price). Both raise the effective purchase price; a
+			// pure-touch fill would overstate the simulated result.
 			takeAt := func(ask int64) int64 {
 				p := float64(ask) / 1e6
 				feePerShare := b.cfg.TakerFeeRate * p * (1 - p)
@@ -621,8 +622,8 @@ func (b *Bot) step(ctx context.Context, now time.Time) {
 	}
 
 	// 5. Endgame inventory management — residual inventory riding into
-	// settlement is the dominant loss channel (fills mark out positive,
-	// windows settle negative). Approaching the close:
+	// settlement is the dominant loss channel (fills can mark out positive
+	// while windows settle negative). Approaching the close:
 	//   T < FlattenT1: no NEW exposure — only the reducing side quotes
 	//                  (both modes of a side move net the same direction).
 	//   T < FlattenT2: force-flatten anything >= venue minimum, maker if
@@ -635,8 +636,8 @@ func (b *Bot) step(ctx context.Context, now time.Time) {
 	}
 	// Adaptive adverse-selection gate: if recent fills marked out negative
 	// (EWMA below −MarkoutGate), we're being picked off — stop quoting until
-	// the market stops running against us. This is the one signal that
-	// separated winning from losing net=0 windows in the live data.
+	// the market stops running against us. Markout is the signal used to
+	// tell windows where we are being picked off from the others.
 	if b.cfg.MarkoutGate > 0 && b.markoutEWMA < -b.cfg.MarkoutGate {
 		q.BidOK, q.AskOK = false, false
 	}
@@ -729,8 +730,8 @@ func (b *Bot) step(ctx context.Context, now time.Time) {
 				// Adaptive adverse-selection gate: track an EWMA of realized
 				// per-share markout. When it goes negative we are being picked
 				// off — suspend quoting (see gate in the quote step) until it
-				// recovers. Analysis showed losing windows avg markout −0.44,
-				// winning +0.21: this is the discriminant, used live.
+				// recovers. Markout is the discriminant between windows where
+				// quotes are picked off and windows where they are not.
 				b.markoutEWMA = 0.7*b.markoutEWMA + 0.3*m.m10
 				log.Printf("markout10s: %+.4f/share (fill up-px %.3f, size %.0f) ewma=%+.4f", m.m10, m.upPrice, m.size, b.markoutEWMA)
 			}
@@ -1678,7 +1679,7 @@ func (b *Bot) resyncOrders(ctx context.Context) {
 // applyResync MERGES a REST snapshot into the registry. Loop goroutine
 // only. Never clear-and-rebuild: orders tracked after the snapshot request
 // may be newer than the snapshot, and wiping them turns their fills into
-// "unknown order" kills (observed live). Removal is by tombstone and only
+// "unknown order" kills. Removal is by tombstone and only
 // for orders provably stale (tracked before the request, absent from the
 // snapshot — venue auto-cancel, manual cancel, heartbeat lapse).
 func (b *Bot) applyResync(snap resyncSnapshot) {

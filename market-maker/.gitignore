@@ -1,7 +1,6 @@
 # === SECRETS — ne jamais committer ===
 *.env
 .env
-.poly_env*
 *secret*
 *.key
 *.pem

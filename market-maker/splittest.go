@@ -1,9 +1,9 @@
 package main
 
-// splittest.go — one-shot Phase B on-chain validation: split 5 pUSD into a
-// complete Up+Down set on the current window's condition, verify the pUSD
-// left the Safe, merge back, verify it returned. ~$0.006 gas round trip,
-// zero market exposure, fully reversible.
+// splittest.go — one-shot Phase B on-chain round trip that is disabled unless
+// explicitly confirmed through the environment: split 5 pUSD into a complete
+// Up+Down set on the current window's condition, check the pUSD left the
+// Safe, merge back, check it returned. Zero market exposure by construction.
 
 import (
 	"context"

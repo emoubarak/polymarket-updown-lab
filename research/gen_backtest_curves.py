@@ -75,7 +75,7 @@ def curve_for(spec: dict) -> dict | None:
     rows.sort(key=lambda x: x[3]["window_start"])    # chronological (defensive)
 
     # COMPOUND from $100 with the weighted (10 %-of-capital, book-depth-capped) model —
-    # the SAME staking.weighted_clip the paper engine + pilot use, per coin. The curve is
+    # the SAME staking.weighted_clip the paper engine uses, per coin. The curve is
     # cumulative DOLLAR P&L (from a $100 base); EV/$ below stays size-invariant.
     cap = COIN_BET_MAX.get(spec["u"], 50.0)
     min_clip = min(5.0, cap)

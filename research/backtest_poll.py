@@ -1,6 +1,6 @@
 """Backtest the POLL-RATE optimization on favorite's entry band.
 
-Question (2026-06-22): the live runners poll every 10s. Inside the entry band
+Question (2026-06-22): the runners poll every 10s. Inside the entry band
 [0.35,0.45] frac-REMAINING (== [0.55,0.65] elapsed) the engine samples the market
 at that cadence and enters at the FIRST qualifying tick, once per window. Two
 nuances were floated:

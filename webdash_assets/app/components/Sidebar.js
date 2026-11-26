@@ -1,6 +1,5 @@
 // Left rail — scales to N strategies (the old 13-tab horizontal bar didn't).
-// Real money sits at the top with its live P&L inline; each strategy shows a
-// verdict dot + paper P&L so the whole race reads at a glance.
+// Each strategy shows a verdict dot + paper P&L so the whole race reads at a glance.
 //
 // The race itself is no longer one flat chain: a grouping selector (Strat / Coin /
 // Frame) folds the runners into collapsible sub-groups along the chosen axis, each
@@ -72,18 +71,7 @@ function groupStrats(axis){
   return order.map(k => ({key:k, items:byKey[k]}));
 }
 
-export function Sidebar({route, all, conn, pilot, mm, go}){
-  // wallet = the ONE shared real wallet (see collect_pilots). Real-time P&L = current
-  // mark-to-market capital − deposit baseline; moves with open positions. (The old
-  // pilot.realized_pnl was a single-pilot leftover — /pilot-data is a list now → it read 0.)
-  const w = (pilot && pilot.wallet) || {};
-  const plPnl = w.pnl || 0;
-  const plLive = !!w.live;
-  // rewards-MM badge = marked P&L + estimated rebate across live runners (its true take).
-  const mAgg = (mm && mm.agg) || {};
-  const mmPnl = (mAgg.mark || 0) + (mAgg.rebate || 0);
-  const mmLive = (mAgg.n_real || 0) > 0;
-
+export function Sidebar({route, all, conn, go}){
   // grouping axis + collapse state, mirrored to the module so they survive a remount
   const [by, setByS] = useState(NAV.by);
   const [, bump] = useState(0);
@@ -104,12 +92,6 @@ export function Sidebar({route, all, conn, pilot, mm, go}){
 
     <${Item} active=${route==="overview"} glyph="◈" label="Overview" onClick=${()=>go("overview")} />
     <${Item} active=${route==="correlation"} glyph="▦" label="Correlations" onClick=${()=>go("correlation")} />
-    <${Item} active=${route==="pilot"} real=${true} glyph="⚗" label="The pilot ${plLive?"🔴":""}"
-      onClick=${()=>go("pilot")}
-      right=${html`<span class=${"pnl "+signCls(plPnl)}>${moneyS(plPnl)}</span>`} />
-    <${Item} active=${route==="mm"} real=${mmLive} glyph="⚒" label="Rewards-MM ${mmLive?"🔴":""}"
-      onClick=${()=>go("mm")}
-      right=${mmLive?html`<span class=${"pnl "+signCls(mmPnl)}>${moneyS(mmPnl)}</span>`:null} />
     <${Item} active=${route==="events"} glyph="🗳" label="Events" onClick=${()=>go("events")} />
     <${Item} active=${route==="copy"} glyph="🪞" label="Wallet copy" onClick=${()=>go("copy")} />
     <${Item} active=${route==="history"} glyph="🕰" label="History" onClick=${()=>go("history")} />

@@ -10,8 +10,7 @@
 # The zlead family is ONE engine + composable Presets (pmlab/presets.py): zlead
 # (flagship, band 0.85-0.95 z>=1, slot 0.27-0.45) + types n (band 0.85-0.90) / x (z>=1.5) /
 # mk (maker). Entry slot widened enter_lo 0.35->0.27 (4-6.75min) to maximise CUMULATIVE
-# $/day; per-coin enter_lo via COIN_SLOTS (bnb 0.33, auto by --underlying). Real pilots are
-# armed via the dashboard (.live_env + Arm), NOT this watchdog.
+# $/day; per-coin enter_lo via COIN_SLOTS (bnb 0.33, auto by --underlying).
 #
 # SETTLEMENT: paper settles on the real Chainlink ORACLE (feeds.resolve_market) + Binance
 # proxy fallback. 1h/30m up/down markets DO NOT EXIST on Polymarket; 4h has no edge.
@@ -28,16 +27,15 @@ exec 9>"$HOME/.watchdog.lock"
 flock -n 9 || exit 0
 
 COINS="btc eth sol xrp doge bnb"
-VARIANTS="zlead zleadx zleadn zleada zleadp"   # paper matrix (60). MÉNAGE 2026-06-27 : zleadmk RETIRÉ (maker saigne, taker>>maker falsifié) → place faite pour zleadp=FLAGSHIP. zleadmk/zleadf restent armables/constructibles, hors matrice. Plafond VPS ~60-72 : retirer un variant avant d'en ajouter
+VARIANTS="zlead zleadx zleadn zleada zleadp"   # paper matrix (60). MÉNAGE 2026-06-27 : zleadmk RETIRÉ (taker>>maker falsifié) → place faite pour zleadp=FLAGSHIP. zleadmk/zleadf restent constructibles, hors matrice. Plafond VPS ~60-72 : retirer un variant avant d'en ajouter
 FRAMES="5m 15m"
 
 launch() { # $1=strategy  $2=flags  $3=state_dir  $4=log
   pgrep -f "[m]ain.py.*--state-dir $3( |\$)" > /dev/null || \
     setsid nohup python3 -u main.py --strategy $1 $2 --state-dir $3 >> $4 2>&1 < /dev/null & }
 
-# ---- HOUSEKEEPING — fiabilité 24/7 (paper UNIQUEMENT ; ne touche JAMAIS run_live.py ni
-# les live_state_*/ : le glob state_* exclut le préfixe live_state_, et tous les patterns
-# sont bracketés + scopés à un --state-dir précis). Tourne AVANT la relance pour que les
+# ---- HOUSEKEEPING — fiabilité 24/7 (paper UNIQUEMENT ; tous les patterns sont
+# bracketés + scopés à un --state-dir précis). Tourne AVANT la relance pour que les
 # runners ressuscités soient repris dans la même passe.
 STALE_MIN=8           # un runner crypto vivant mais sans tick.json frais depuis 8 min (poll
 #                       12s → 40× la cadence) est FIGÉ (stall réseau/API) → kill ciblé + relance.
@@ -78,7 +76,7 @@ DISK=$(df -P . | awk 'NR==2{print $5}' | tr -d '%')
 [ "${DISK:-0}" -ge "$DISK_WARN" ] && echo "$(date -Is) ⚠ DISQUE à ${DISK}% (seuil ${DISK_WARN}%)"
 
 # THE MATRIX — every variant × coin × frame. enter_lo is per-coin (COIN_SLOTS, automatic).
-# SIZING (2026-06-26): WEIGHTED like the real pilot — each bet is 10 % of capital, capped at
+# SIZING (2026-06-26): WEIGHTED — each bet is 10 % of capital, capped at
 # the coin's book depth (presets.COIN_BET_MAX, auto by --underlying), from a $100 start. So
 # paper reflects realistic max-capacity throughput, not a token flat $25. (Old: --bankroll
 # 1000 --stake 25.) Existing states were recomputed retroactively (tools/recompute_sizing.py).
@@ -107,15 +105,8 @@ clauch coinman2 state_copy_coinman2 copy_coinman2.log
 clauch 06dc     state_copy_06dc     copy_06dc.log
 clauch king     state_copy_king     copy_king.log
 
-# Optional real-money env for the dashboard's "Arm" button (POLY_PRIVATE_KEY, POLY_SIG_TYPE,
-# POLY_FUNDER, POLY_RPC). Absent by default -> the pilot can ONLY run DRY-RUN. Create
-# ~/pmlab/.live_env (chmod 600, gitignored) with the exports; the key never enters
-# the repo or the code.
-[ -f .live_env ] && set -a && . ./.live_env && set +a
-
 # --- dashboard: the full crypto matrix (generated) + the events + copy tabs.
-# Morocco DISPLAY dashboard (SPA + paper/events/copy + the pilot tab proxied to the AWS
-# engine via --pilot-remote). Single source = deploy/morocco_dash.sh, fed THIS watchdog's
+# Dashboard (SPA + paper/events/copy). Single source = deploy/morocco_dash.sh, fed THIS watchdog's
 # strat matrix so the list never drifts. (The launch moved out of the watchdog so it can
 # also be triggered by hand without tripping the watchdog's own dedup guard.)
 COINS="$COINS" VARIANTS="$VARIANTS" FRAMES="$FRAMES" bash deploy/morocco_dash.sh

@@ -3,7 +3,7 @@
 ONE definition of "what is an entry / a close / a win / which window" so the
 dashboard's per-strategy metrics (webdash.live_metrics) and the cross-strategy
 correlation matrix (correlation.py) can never drift on it (cf. always-modularize:
-the entry gate already burned us by living in two code paths). Pure, stdlib-only.
+the entry gate once lived in two code paths and drifted). Pure, stdlib-only.
 
 Journal kinds (paper.py / events / scalp):
   BUY[tag] / BUY+[tag]  taker entry (and top-up toward target stake)

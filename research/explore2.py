@@ -30,7 +30,7 @@ import sys
 
 CACHE = os.path.join(os.path.dirname(__file__), "data")
 # Crypto taker fee coefficient. The 0.07 fee IS charged on-chain — re-verified 2026-06-27
-# from raw tx receipts (wallet 0xd630…, NEW pUSD relayer 0xe111…): the wallet debits exactly
+# from raw tx receipts (NEW pUSD relayer 0xe111…): the wallet debits exactly
 # `usdcSize` = size×price + fee at ENTRY, and the fee = 0.07×p×(1−p)×shares is forwarded in
 # pUSD to collector 0x115f48dc on BOTH 5m AND 15m (never at settlement). The earlier
 # "phantom/fee=0" read (2026-06-26) tracked USDC.e transfers and MISSED the pUSD fee leg —

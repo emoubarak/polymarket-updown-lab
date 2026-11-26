@@ -17,8 +17,8 @@ FLATTERY GAP. Verdict:
   - FLATTERED  if track_edge - tape_edge exceeds `gap_max` (the backtest is lying), or
   - DEAD       if the tape edge itself isn't REAL (winrate <= price paid), or
   - SURVIVES   if the tape edge is REAL and close to the track edge.
-Run this on a tape sample BEFORE trusting any new backtest, and never deploy real money
-on a config that FLATTERS or is DEAD on tape — paper-forward-test it first.
+Run this on a tape sample BEFORE trusting any new backtest, and never trust a
+config that FLATTERS or is DEAD on tape — paper-forward-test it first.
 
 Get tape: python3 research/dataset.py --count 200 --interval 5m --force   (and 15m, eth_…)
 Run:      python3 research/flattery_audit.py [5m|15m] [btc|eth|sol|xrp]
@@ -97,7 +97,7 @@ def audit(frame="5m", token="btc", frac=0.60, floor=0.85, z_thr=1.5):
     print(f"  tape  : EV/$ {tap[0]:+.4f} n={tap[1]:<4d} win {tap[2]:.3f}/px {tap[3]:.3f}  <- the real number")
     print(f"  FLATTERY GAP (track-tape) = {gap:+.4f}  (max {GAP_MAX})  ->  [{verdict}]")
     if verdict == "DEAD":
-        print("  !! NO executable edge on tape — do NOT deploy real money.")
+        print("  !! NO executable edge on tape — do NOT deploy.")
     elif verdict == "FLATTERED":
         print(f"  !! backtest is INFLATED — ignore the track {trk[0]:+.4f}; the tape {tap[0]:+.4f} is the floor. "
               "Confirm on the LIVE forward-test (exec_book may beat the tape proxy) before sizing.")

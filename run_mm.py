@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Run the two-sided market-making quoter (pmlab.mm.MarketMaker).
 
-DRY-RUN unless armed — same arming as run_live:
-    POLY_LIVE=1 POLY_CONFIRM=I_UNDERSTAND_REAL_MONEY POLY_PRIVATE_KEY=0x...
+Dry-run by default; a live mode exists but is disabled unless POLY_LIVE/POLY_CONFIRM are set.
 Flavor A: NO complete-set minting, NO web3, NO POL. The cheapest test of whether a
-co-located two-sided maker captures spread net-positive (vs scalp.py's non-colo bleed).
+low-latency two-sided maker captures spread net-positive (vs scalp.py).
 
     python3 run_mm.py --interval 15m --underlying eth --edge 0.01 --max-inv 20 --kill-loss 10
 """
@@ -50,7 +49,7 @@ def main():
     if is_armed():
         broker.connect()
         broker.ensure_allowances()
-    mode = "🔴 LIVE (real money)" if is_armed() else "DRY-RUN (disarmed)"
+    mode = "🔴 LIVE (armed)" if is_armed() else "DRY-RUN (disarmed)"
     mm = MarketMaker(a, broker, log=log)
     log(f"market-maker up — {mode} | edge={a.edge} max_inv={a.max_inv} "
         f"kill=-{a.kill_loss} | {mm.status()}")

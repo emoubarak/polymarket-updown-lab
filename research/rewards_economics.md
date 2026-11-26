@@ -27,17 +27,16 @@ $190k/day notional. **You do NOT need $190k of capital — you need ~$5k working
    splitting the pool with std0. Realistic capture competing head-on: a fraction of the pool.
 2. **Spread must stay ≈ breakeven** — tight two-sided quotes get adversely selected (filled right
    before the price moves). If adverse-selection bleed > rebate, net-negative. This is THE hinge — the
-   live `mark` P&L (ex-rebate) over many windows decides viability. std0 keeps it ~0 via fast re-peg +
+   spread P&L (ex-rebate) over many windows decides viability. std0 keeps it ~0 via fast re-peg +
    neutrality + the −60s settle cutoff.
 3. **Finite pool** — btc-5m maker pool ≈ $1,000/day (it's 20% of that market's taker fees). The whole
    crypto-updown rebate universe ≈ $1,500–2,000/day (std0's level). You can match std0 with capital +
    execution; you cannot greatly exceed the pool without new markets.
 
-## Path for us
-- **$40 (now)**: proof-of-mechanism only — mint $15, quote, measure fills + mark. Earns cents.
-- **~$2,500–5,000 working capital**: run the harvester at std0's per-window size on btc-5m (+ eth/sol
-  15m where competition is thinner); earn a share of ~$1,000–2,000/day **iff** mark stays ≈ breakeven.
-- Scale breadth across coins/frames once btc-5m mark P&L is proven non-negative live.
+## Scaling path (analysis)
+- **Proof-of-mechanism scale (tens of dollars)**: earns cents per day; shows the mechanism only.
+- **~$2,500–5,000 working capital**: std0's per-window size on btc-5m (+ eth/sol 15m where competition is thinner) would earn a share of ~$1,000–2,000/day **iff** the spread P&L stays ≈ breakeven.
+- Breadth across coins/frames only matters once btc-5m spread P&L is non-negative.
 
-**Verdict:** replicable and it scales with capital + fill-share, to ~std0's $1–2k/day ceiling — but it
-is a genuine latency/inventory MM operation, not a passive edge. Go/no-go = the live `mark` P&L.
+**Verdict:** replicable in principle, and it scales with capital + fill-share, to ~std0's $1–2k/day ceiling — but it
+is a genuine latency/inventory MM operation, not a passive edge. Go/no-go = the spread P&L (ex-rebate) over many windows.

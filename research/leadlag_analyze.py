@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Analyze the real-time lead-lag book shadow (leadlag_shadow/books.csv on AWS).
+"""Analyze the real-time lead-lag book shadow (leadlag_shadow/books.csv, written by the capture host).
 
 Settles the question the cached tape cannot: is the cross-coin lead-lag a REAL sub-minute lag
-(capturable) or a tape-staleness artifact? Run on AWS where books.csv lives:
+(capturable) or a tape-staleness artifact? Run where books.csv lives:
     python3 research/leadlag_analyze.py
 """
 import csv, sys, os, glob, json
